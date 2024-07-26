@@ -1,0 +1,97 @@
+<!-- es-index.ejs -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no">
+    <title>当日日報</title>
+    <link rel="stylesheet" href="/static/css/style-basic.css">
+    <link rel="stylesheet" href="/static/css/style-espages.css">
+    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+    <!-- Common JavaScript -->
+    <script src="/static/javascripts/qrcode.js"></script>
+    <script src="/static/javascripts/_myfunctions.js"></script>
+</head>
+<body>
+    <!-- Common JavaScript EJS -->
+    <%- include("_myfunctions.ejs") %>
+
+    <!-- Header -->
+    <!--%- include("../_header.ejs", { title: "日報" + myFunc.c(planday), req }) %-->
+
+    <!-- Details -->
+    <div id="top"></div>
+    <div id="details-i" class="containers">
+    <% if (kd8220.length == 0) { %>
+        <div class="alert">日報データが存在しません．</div>
+    <% } else { %>
+        <hr>
+        <table id="tbl2">
+            <tr>
+                <th width="10px" class="th-small">
+                    <div>No</div>
+                </th>
+                <th width="390px" class="th-big">
+                    <div>品　　番</div>
+                </th>
+                <th width="50px" class="th-small">入庫数</th>
+                <th width="50px" class="th-small">出庫数</th>
+                <th width="30px" class="th-small">廃</th>
+                <th width="60px" class="th-small">
+                    <div class="c-btn">作業者</div>
+                </th>
+                <th width="40px" class="th-small">EM</th>
+                <th width="40px" class="th-small">登録日</th>
+            </tr>
+            <% let myNo = 1; %>
+            <% kd8220.forEach(function (d) { %>
+            <tr>
+                <td class="td-small"><%= myNo %></td>
+                <td class="s<%= d.ENTRYSTS %>">
+                    <%= d.HMCD %>
+                </td>
+                <td class="td-big"><%= d.CHKQTY %></td><td class="td-big"><%= d.DEPOQTY %></td>
+                <% let scrap = d.SCRAPBRASS+d.SCRAPTIG+d.SCRAPCOPPER+d.SCRAPARC+d.SCRAPSHAPE+d.SCRAPOTHER %>
+                <% if (scrap == 0) { %>
+                    <td></td>
+                <% } else { %>
+                    <td class="alert"><%= scrap %></td>
+                <% }; %>
+                <td class="td-large-small"><%= d.OPNAME %></td>
+                <td class="td-small"><%= d.CSVOUTDT ? '済' : '　'; %></td>
+                <td class="td-large-small"><%= d.INSTDT.slice(-8) %></td>
+                <td style="display: none;"><%= d.AUTONO %></td>
+                <td style="display: none;"><%= d.OPERATOR %></td>
+            </tr>
+            <% myNo++; %>
+            <% }); %>
+        </table>
+        <br><br>
+    <% }; %>
+
+    </div>
+    <div id="scroll-bottom"></div>
+
+    <!-- Footer -->
+    <%- include("_footer.ejs", req) %>
+
+    <!-- ブラウザ読み込み完了後のJavaScriptを記述 -->
+    <script>
+        // 前日処理
+        function prevday(){
+            const prevday = document.getElementById("prevday").value;
+            const odcd = document.querySelector('[name="select-odcd"]').value;
+            const disp = document.getElementById("disp").value;
+            location.href = `/es/plan/${prevday}/${odcd}/${disp}`;
+        }
+        // 翌日処理
+        function nextday(){
+            const nextday = document.getElementById("nextday").value;
+            const odcd = document.querySelector('[name="select-odcd"]').value;
+            const disp = document.getElementById("disp").value;
+            location.href = `/es/plan/${nextday}/${odcd}/${disp}`;
+        }
+    </script>
+
+</body>
+</html>

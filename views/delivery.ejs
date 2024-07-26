@@ -1,0 +1,123 @@
+<!-- es-index.ejs -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>出荷指示書</title>
+    <link rel="stylesheet" href="/static/css/style-basic.css">
+    <link rel="stylesheet" href="/static/css/style-delivery.css">
+    <!-- Common JavaScript -->
+    <script src="/static/javascripts/_myfunctions.js"></script>
+</head>
+<body>
+    <!-- Common JavaScript EJS -->
+    <%- include("_myfunctions.ejs") %>
+
+    <!-- Header -->
+    <%- include("_header.ejs", { title: "出荷指示書" + myFunc.c(planday), req }) %>
+
+    <!-- Groups -->
+    <div id="navigate">
+    <div id="groups"  class="containers">
+    <% if (locals.err) { %>
+        <ul><li><a href="jp.co.cimtops.ireporter://open">
+        <img src="/static/images/i-reporter.png"></a></li></ul>
+    <% } else { %>
+        <ul id="navi-index">
+            <% let osType = myRequestHeader.osType(req); %>
+
+            <!-- i-Reporter ボタン -->
+            <li><a href="javascript:iReporter()"><img src="/static/images/i-reporter.png"></a></li>
+
+            <!-- 品番検索 ボタン -->
+            <li><a href="/essearch" target="_blank"><img src="/static/images/search.png"></a></li>
+
+        </ul>
+        <input type="hidden" id="planday" name="planday" value="<%= planday; %>">
+        <input type="hidden" id="disp" name="disp" value="<%= disp %>">
+        <% }; %>
+    </div>
+    <hr>
+    </div>
+
+    <!-- Details -->
+    <div id="top"></div>
+
+    <div id="details">
+    <div id="details-index">
+    <% if (locals.err) { %>
+        <ul class="alert">
+            <li><%= err %></li>
+        </ul>
+    <% } else { %>
+
+    <% if (kd8330.length == 0) { %>
+        <div class="alert">出荷指示書データが存在しません．</div>
+    <% } else { %>
+        <table id="tbl1">
+            <tr>
+                <th width="10px" >No</th>
+                <th width="62px" >ﾛｹｰｼｮﾝ</th>
+                <th width="200px">得意先品番</th>
+                <th width="50px" >納入先</th>
+                <th width="50px" >ｶ</th>
+                <th width="50px" >指示数</th>
+                <th width="50px" >前</th>
+                <th width="50px" >当</th>
+                <th width="50px" >検区</th>
+                <th width="50px" >容器名</th>
+                <th width="50px" class="th-small">紐・数量</th>
+                <th width="50px" >社内品番</th>
+                <th width="50px" >前工程</th>
+
+                <th width="50px" >出荷準備数</th>
+                
+            </tr>
+            <% kd8330.forEach(function (d) { %>
+            <tr>
+                <td class=""><%= d.NO %></td>
+                <td class="td-small"><%= d.SKBUCD %></td>
+                <td class="td-big"><%= d.TKHMCD %></td>
+                <td class="td-small"><%= d.NNCD %></td>
+                <td class="td-small"><%= d.BOXNUM %></td>
+                <td class="td-small"><%= d.ODRQTY==0 ? "" : d.ODRQTY %></td>
+                <td class="td-small"><%= d.YESTERDAY %></td>
+                <td class="td-small"><%= d.TODAY %></td>
+                <td class="td-small"><%= d.QCKBN %></td>
+                <td class="td-small"><%= d.SKBOXCD %></td>
+                <td class="td-small"><%= d.INSUU==0 ? "" : d.INSUU %></td>
+                <td class="td-small"><%= d.SKHIASU %></td>
+                <td class="td-small"><%= d.HMCD %></td>
+                <td class="td-small"><%= d.ODRNM %></td>
+                <td class="td-small"><%= d.ODRNO %></td>
+                <td class="td-small"><%= d.SKNOTE %></td>
+
+                <td class="td-small"><%= d.HTJUQTY==0 ? "" : d.HTJUQTY %></td>
+            </tr>
+            <% }); %>
+        </table>
+        <br><br>
+    <% }; %>
+
+    <% }; %>
+    </div>
+    </div>
+    <div id="scroll-bottom"></div>
+
+    <!-- Footer -->
+    <%- include("_footer.ejs", req) %>
+
+    <!-- ブラウザ読み込み完了後のJavaScriptを記述 -->
+    <script>
+        function scriptTest(){
+            var userAgent = window.navigator.userAgent.toLowerCase(); 
+            alert(userAgent);
+        }
+        // i-Reporter の起動
+        async function iReporter(){
+            location.href = "jp.co.cimtops.ireporter://open";
+        }
+    </script>
+
+</body>
+</html>

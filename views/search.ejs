@@ -1,0 +1,264 @@
+<!-- es-index.ejs -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>データ検索</title>
+    <link rel="stylesheet" href="/static/css/style-basic.css">
+    <link rel="stylesheet" href="/static/css/style-espages.css">
+    <!-- Common JavaScript -->
+    <script src="/static/javascripts/qrcode.js"></script>
+    <script src="/static/javascripts/JsBarcode.all.min.js"></script>
+    <script src="/static/javascripts/_myfunctions.js"></script>
+</head>
+<body>
+    <!-- Common JavaScript EJS -->
+    <%- include("_myfunctions.ejs") %>
+
+    <!-- Header -->
+    <%- include("_header.ejs", { title: "検査日報 データ検索", req }) %>
+
+    <!-- Groups -->
+    <div id="navigate">
+    <div id="groups"  class="containers">
+        <ul id="navi-search">
+            <!-- 変数定義 -->
+            <% let osType = myRequestHeader.osType(req); %>
+            <!-- 入力ボックス -->
+            <li>
+                <label class="ef">
+                    <input type="text" maxlength="12" placeholder="品番を入力" oninput="inputChange()" id="input-hmcd"></li>
+                </label>
+            <!-- 検索ボタン -->
+            <li>
+                <select name="select-hmcd" title="品番の選択" id="select-hmcd" disabled>
+                    <option>品番を入力してください</option>
+                </select>
+                <select name="list-hmcd" title="品番の選択" id="list-hmcd" hidden>
+                    <% kd8220dic.forEach(function (d) { %>
+                        <option value="<%= d.HMCD %>"><%= d.HMCD %></option>
+                    <% }); %>
+                </select>
+            </li>
+            <!-- 件数表示 -->
+            <li><div color="#333" id="count"></div></li>
+            <!-- 予備空白調整用 -->
+            <li></li>
+            <!-- QRコード ポッポアップボタン -->
+            <li>
+                <a href="javascript:QRDisp()"><img src="/static/images/qrcode.png"></a>
+            </li>
+            <!-- 閉じるボタン -->
+            <li><a href="javascript:open('about:blank', '_self').close();"><img src="/static/images/xmark-solid.svg" width="50px"></a></li>
+        </ul>
+    </div>
+    <hr>
+    </div>
+
+    <!-- Details -->
+    <div id="top"></div>
+
+    <!-- Popup Window -->
+    <div id="popWin">
+        <div class="pop-win">
+            <div class="modal-body">
+                <div id="qrcode"></div>
+                <svg id="barcode"></svg>
+            </div>
+            <div id="close">閉じる</div>
+        </div>
+    </div>
+
+    <div id="details">
+    <div id="details-index">
+    <% if (locals.err) { %>
+        <ul class="alert">
+            <li><%= err %></li>
+        </ul>
+    <% } else { %>
+        <table id="tbl1">
+            <tr>
+                <th width="40px" rowspan="2">No</th>
+                <th width="200px" rowspan="2">　　　品　　番　　　</th>
+                <th width="50px" rowspan="2">入庫数</th>
+                <th width="50px" rowspan="2">出庫数</th>
+                <th colspan="4" class="th-small">洩れ不良件数</th>
+                <th width="36px" rowspan="2" class="th-small">形状<br>不良</th>
+                <th width="36px" rowspan="2" class="th-large-small">その他<br>不良</th>
+                <th width="50px" rowspan="2" class="th-small">廃棄数</th>
+                <th width="60px" rowspan="2" class="th-small">作業者</th>
+                <th width="40px" rowspan="2" class="th-small">CSV</th><th width="20px" rowspan="2" class="th-small"></th>
+                <th width="180px" rowspan="2" class="lef">&nbsp;備考</th>
+                <th width="80px" rowspan="2" class="">登録日付</th>
+            </tr>
+            <tr>
+                <th width="36px" height="26px" class="th-large-small">黄銅部</th>
+                <th width="36px" height="26px" class="th-large-small">仮付部</th>
+                <th width="36px" height="26px" class="th-large-small">炉中部</th>
+                <th width="36px" height="26px" class="th-large-small">電気部</th>
+            </tr>
+        </table>
+        <br><br>
+    <% }; %>
+    </div>
+    </div>
+    
+    <!-- Footer -->
+    <%- include("_footer.ejs", req) %>
+
+    <!-- ブラウザ読み込み完了後のJavaScriptを記述 -->
+    <script>
+        function inputChange(){
+            //list-hmcd から select-hmcd を生成
+            const inputHMCD = document.getElementById("input-hmcd"); 
+            const srch = inputHMCD.value.toUpperCase();
+            const srchlen = srch.length;
+            const listHMCD = document.getElementById("list-hmcd");
+            const selectHMCD = document.getElementById("select-hmcd");
+            selectHMCD.disabled = false; //選択可能な状態にする
+            selectHMCD.innerHTML = "";
+            //alert("clear");
+            //alert("table delete");
+            //選択されたジャンルのメニュー一覧に対して処理をする
+            for (let i = 0; i < listHMCD.length; i++) {
+                let target = listHMCD[i].value;
+                if (target.substr(0, srchlen) == srch) {
+                    if (selectHMCD.length == 0){
+                        const option = document.createElement("option");
+                        option.innerHTML = "品番を選択してください";
+                        selectHMCD.appendChild(option);
+                    }
+                    const option = document.createElement("option");
+                    option.value = listHMCD[i].value;
+                    option.innerHTML = listHMCD[i].value;
+                    selectHMCD.appendChild(option);
+                }
+            };
+            if (selectHMCD.length == 0) {
+                const option = document.createElement('option');
+                option.innerHTML = "品番を入力してください";
+                selectHMCD.appendChild(option);
+                selectHMCD.disabled = true;
+                document.getElementById("count").innerHTML = "対象なし";
+            } else {
+                // 工程場所 selector の change イベント作成
+                const select = document.querySelector('[name="select-hmcd"]');
+                select.onchange = event => { 
+                    const hmcd = document.getElementById("select-hmcd").value;
+                    changeHMCD(hmcd);
+                }
+                document.getElementById("count").innerHTML = "対象" + (selectHMCD.length - 1) + "品番";
+            }
+        }
+        // selector の change イベント
+        function changeHMCD(hmcd) {
+            fetch(`/es/search/${hmcd}`)
+            .then(response => response.json())
+            .then(data => {
+                // 今表示されているテーブルのヘッダー以外を全削除
+                let table = document.getElementById("tbl1");
+                do {
+                    if (table.rows.length > 2) {table.deleteRow(-1);}
+                } while (table.rows.length > 2);
+                // APIで取得したデータをテーブ行に追加
+                data.forEach(function (d) {
+                    let newRow = table.insertRow();
+                    appendTD(newRow, d.AUTONO, "");
+                    appendTD(newRow, d.HMCD, "s" + d.ENTRYSTS);
+                    appendTD(newRow, d.CHKQTY, "td-big");
+                    appendTD(newRow, d.DEPOQTY, "td-big");
+                    appendTD(newRow, d.LEAKBRASS == 0 ? "" : d.LEAKBRASS, "td-small");
+                    appendTD(newRow, d.LEAKTIG == 0 ? "" : d.LEAKTIG, "td-small");
+                    appendTD(newRow, d.LEAKCOPPER == 0 ? "" : d.LEAKCOPPER, "td-small");
+                    appendTD(newRow, d.LEAKARC == 0 ? "" : d.LEAKARC, "td-small");
+                    appendTD(newRow, d.DEFECTSHAPE == 0 ? "" : d.DEFECTSHAPE, "td-small");
+                    appendTD(newRow, d.DEFECTOTHER == 0 ? "" : d.DEFECTOTHER, "td-small");
+                    let scrap = d.SCRAPBRASS + d.SCRAPTIG + d.SCRAPCOPPER + d.SCRAPARC + d.SCRAPSHAPE + d.SCRAPOTHER;
+                    if (scrap == 0) {
+                        appendTD(newRow, "", "");
+                    } else {
+                        appendTD(newRow, scrap, "alert");
+                    }
+                    appendTD(newRow, d.OPNAME, "td-large-small");
+                    appendTD(newRow, d.CSVOUTDT ? "済" : " ", "td-small");
+                    let check = document.createElement("input");
+                    check.setAttribute("type", "checkbox");
+                    check.setAttribute("name", "recsv");
+                    check.setAttribute("class", "checks");
+                    let newCell = newRow.insertCell();
+                    newCell.appendChild(check);
+                    appendTD(newRow, d.NOTE, "lef");
+                    appendTD(newRow, d.INSTDT, "td-small");
+                });
+            });
+        }
+        function appendTD(newrow, str, name){
+            let newCell = newrow.insertCell();
+            let newText = document.createTextNode(str);
+            newCell.appendChild(newText);
+            if (name!="") {newCell.className = name;}
+        }
+        // CSVダウンロード処理
+        function csvdownload(){
+            const planday = document.getElementById("planday").value;
+            const odcd = document.querySelector('[name="select-odcd"]').value;
+            const date = new Date();                        //現在時刻を取得
+            const y = date.getFullYear(),                   //西暦年
+                m = ("0" + (date.getMonth() + 1)).slice(-2),//月　
+                d = ("0" + date.getDate()).slice(-2),       //日
+                H = ("0" + date.getHours()).slice(-2),      //時
+                M = ("0" + date.getMinutes()).slice(-2),    //分
+                S = ("0" + date.getSeconds()).slice(-2);    //秒
+            const time = `${H}${M}`;
+            /* alert(`${y}/${m}/${d} ${H}:${M}:${S}`); */
+            // (1) XMLHttpRequestオブジェクトを作成
+            const xmlHttpRequest = new XMLHttpRequest();
+            // (2) CSVデータ作成依頼
+            xmlHttpRequest.open('GET', `/es/makecsv/${planday}/${odcd}/${time}`, false); // 第3引数false:同期通信
+            xmlHttpRequest.send();
+            // (3) 同期処理終了後、ステータス判定
+            if (xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200 ) {
+                // (4) CSVダウンロード済みにDOM更新 (1.img画像と2.リンク先)
+                const row = tbl1.rows.length;
+                for( var i = 2; i < row; i++ ){
+                    tbl1.rows[i].cells[13].innerHTML = "済";
+                }
+                const csvimg = document.getElementById("csvimg");
+                csvimg.src = "/static/images/csvnothing.png";
+                const csvref = document.getElementById("csvref");
+                csvref.href = "javascript:void(0)";
+                // (5) 完成したCSVファイルをダウンロード
+                location.href = `/static/downloads/es_${planday}_${odcd}_${time}.csv`;
+            }
+        }
+        // QRポップアップ閉じる
+        const close = document.getElementById("close");
+        const popWin = document.getElementById("popWin");
+        close.addEventListener("click", () => {
+            popWin.style.display = "none";
+            document.getElementById("qrcode").innerHTML = "";
+        });
+        // QRポップアップ表示
+        function QRDisp(){
+            if (tbl1.rows.length <= 2) { return; }
+            popWin.style.display = "flex";
+            const hmcd = tbl1.rows[2].cells[1].innerText.trim();
+            new QRCode(document.getElementById("qrcode"), {
+            	text: hmcd,
+	            width: 128,
+                height: 128,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            JsBarcode("#barcode", hmcd, {
+                format: "CODE128",
+                width: 1,
+                height: 40,
+                displayValue: false
+            });
+        }
+    </script>
+
+</body>
+</html>
