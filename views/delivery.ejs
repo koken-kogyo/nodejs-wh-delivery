@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>出荷指示書</title>
+    <title>物流出荷指示書</title>
     <link rel="stylesheet" href="/static/css/style-basic.css">
     <link rel="stylesheet" href="/static/css/style-delivery.css">
     <!-- Common JavaScript -->
@@ -18,21 +18,38 @@
 
     <!-- Groups -->
     <div id="navigate">
-    <div id="groups"  class="containers">
+    <div id="groups" class="containers">
     <% if (locals.err) { %>
         <ul><li><a href="jp.co.cimtops.ireporter://open">
         <img src="/static/images/i-reporter.png"></a></li></ul>
     <% } else { %>
-        <ul id="navi-index">
-            <% let osType = myRequestHeader.osType(req); %>
+        <div id="menu">
 
-            <!-- i-Reporter ボタン -->
-            <li><a href="javascript:iReporter()"><img src="/static/images/i-reporter.png"></a></li>
+            <!-- 得意先 -->
+            <div class="menu-item">得意先：<br><div class="menu-data">枚方(C0105)</div></div>
+
+            <!-- 出荷日 -->
+            <div class="menu-item">出荷日：<br><div class="menu-data"><%= kd8330[0].SHIPDT %></div></div>
+
+            <!-- 受注納期 -->
+            <div class="menu-item">受注納期：<br><div class="menu-data"><%= kd8330[0].DLVRDT %></div></div>
+
+            <!-- 機能切り替え -->
+            <div class="menu-item">未処理のみ表示
+                <div class="button r" id="button-1">
+                    <input type="checkbox" class="checkbox" id="checkDisp" onchange="checkDispChange()" />
+                    <div class="knobs"></div>
+                    <div class="layer"></div>
+                </div>
+            </div>
+
+            <!-- 出荷点数 -->
+            <div class="menu-item">出荷準備完了：<br><div class="menu-data"><%= cnt %> / <%= ttl %>点</div></div>
 
             <!-- 品番検索 ボタン -->
-            <li><a href="/essearch" target="_blank"><img src="/static/images/search.png"></a></li>
+            <div class="menu-img"><a href="/wh"><img style="margin-top:20px;margin-right:10px;width:40px;" src="/static/images/home50x50.png"></a></div>
 
-        </ul>
+        </div>
         <input type="hidden" id="planday" name="planday" value="<%= planday; %>">
         <input type="hidden" id="disp" name="disp" value="<%= disp %>">
         <% }; %>
@@ -57,30 +74,32 @@
         <table id="tbl1">
             <tr>
                 <th width="10px" >No</th>
-                <th width="62px" >ﾛｹｰｼｮﾝ</th>
-                <th width="200px">得意先品番</th>
+                <th width="50px" >ﾛｹｰｼｮﾝ</th>
+                <th width="160px">得意先品番</th>
                 <th width="50px" >納入先</th>
-                <th width="50px" >ｶ</th>
+                <th width="5px" >ｶ</th>
                 <th width="50px" >指示数</th>
-                <th width="50px" >前</th>
-                <th width="50px" >当</th>
-                <th width="50px" >検区</th>
+                <th width="50px" class="th-small">出荷<br>準備</th>
+                <th width="10px" >前</th>
+                <th width="10px" >当</th>
+                <th width="20px" >検区</th>
                 <th width="50px" >容器名</th>
-                <th width="50px" class="th-small">紐・数量</th>
-                <th width="50px" >社内品番</th>
+                <th width="50px" >収容数</th>
+                <th width="50px" class="th-small">紐色<br>数量</th>
+                <th width="120px" >社内品番</th>
                 <th width="50px" >前工程</th>
-
-                <th width="50px" >出荷準備数</th>
-                
+                <th width="50px" class="th-small">出荷準<br>備担当</th>
+                <th width="50px" class="th-small">出荷準<br>備日時</th>
             </tr>
             <% kd8330.forEach(function (d) { %>
             <tr>
                 <td class=""><%= d.NO %></td>
                 <td class="td-small"><%= d.SKBUCD %></td>
-                <td class="td-big"><%= d.TKHMCD %></td>
+                <td class="td-big s3"><%= d.TKHMCD %></td>
                 <td class="td-small"><%= d.NNCD %></td>
                 <td class="td-small"><%= d.BOXNUM %></td>
                 <td class="td-small"><%= d.ODRQTY==0 ? "" : d.ODRQTY %></td>
+                <td class="td-small"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
                 <td class="td-small"><%= d.YESTERDAY %></td>
                 <td class="td-small"><%= d.TODAY %></td>
                 <td class="td-small"><%= d.QCKBN %></td>
@@ -89,10 +108,8 @@
                 <td class="td-small"><%= d.SKHIASU %></td>
                 <td class="td-small"><%= d.HMCD %></td>
                 <td class="td-small"><%= d.ODRNM %></td>
-                <td class="td-small"><%= d.ODRNO %></td>
-                <td class="td-small"><%= d.SKNOTE %></td>
-
-                <td class="td-small"><%= d.HTJUQTY==0 ? "" : d.HTJUQTY %></td>
+                <td class="td-small"><%= d.HTTANNM %></td>
+                <td class="td-small"><%= myFunc.aa(d.HTJUDT) %></td>
             </tr>
             <% }); %>
         </table>
@@ -109,6 +126,44 @@
 
     <!-- ブラウザ読み込み完了後のJavaScriptを記述 -->
     <script>
+        
+        colorDuplicationInspect();
+
+        // 得意先品番の重複データ・検区に色付け処理
+        function colorDuplicationInspect() {
+            //alert(tbl1.rows.length);
+            const disp = document.getElementById("disp").value;
+            const row = tbl1.rows.length;
+            for( var i = 1; i <= row; i++ ){
+                // 品番重複行は色付け
+                if (tbl1.rows[i].cells[2].innerHTML == tbl1.rows[i + 1].cells[2].innerHTML) {
+                    tbl1.rows[i    ].cells[2].classList.add("s4");
+                    tbl1.rows[i + 1].cells[2].classList.add("s4");
+                }
+                //出荷準備完了行は消す
+                if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[6].innerHTML) {
+                    tbl1.rows[i].style.display = "none";
+                }
+                // 検区RFH始まり
+                let tmp = tbl1.rows[i].cells[9].innerHTML;
+                if (tmp.substring(0, 1) == "R" || tmp.substring(0, 1) == "F" || tmp.substring(0, 1) == "H") {
+                    tbl1.rows[i].cells[9].classList.add("s8");
+                }
+            }
+        }
+        // CheckBoxChangeイベント
+        function checkDispChange() {
+            const row = tbl1.rows.length;
+            for( var i = 1; i <= row; i++ ){
+                if (checkDisp.checked == false) {
+                    if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[6].innerHTML) {
+                       tbl1.rows[i].style.display = "none";
+                    }
+                } else {
+                    tbl1.rows[i].style.display = "";
+                }
+            }
+        }
         function scriptTest(){
             var userAgent = window.navigator.userAgent.toLowerCase(); 
             alert(userAgent);

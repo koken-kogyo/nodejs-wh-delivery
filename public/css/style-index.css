@@ -25,7 +25,7 @@
     --item-title-row: 40px;
 
     --tablet-grid-column: 230px;
-    --tablet-grid-row: 300px;
+    --tablet-grid-row: 320px;
     --tablet-item-img: 100px;
 
     --mobile-grid-column: 180px;
@@ -53,7 +53,7 @@
     background: rgb(250, 250, 250);
     border-radius: 0.5rem;
     font-size: small;
-    margin: 10px auto;
+    margin: 50px auto;
     width: calc((var(--tablet-grid-column) * 4) + 2rem);
     height: 90vh;
     grid-template-columns: repeat(4, var(--tablet-grid-column));
@@ -92,25 +92,31 @@
     color: rgb(50, 50, 50, 0.8);
 }
 .containers .item-header {
-    font-size: 2.5rem;
-    padding: 1.5rem 0 0 0;
+    font-size: 2.0rem;
+    padding: 0.5rem 0 0 0;
     color: chocolate;
 }
 .containers .item-subject {
     color: rgb(210, 105, 30, 0.4);
 }
-.containers .item-title {
+.containers .item-date-title {
     font-size: 1.2rem;
     text-align: left;
-    padding: 0 0 0.7rem 1.0rem;
+    padding: 0 0 0.3rem 1.0rem;
 }
 .containers .item-date {
     font-family: 'Century';
-    font-size: 2.2rem;
+    font-size: 2.0rem;
+}
+.containers .item-count-title {
+    font-size: 1.2rem;
+    text-align: left;
+    padding: 0.8rem 0 0 1.0rem;
 }
 .containers .item-count {
     font-family: 'Century';
-    font-size: 2.4rem;
+    font-size: 2.0rem;
+    padding-top: 0.1rem;
 }
 /* tablet-portrait(縦)-size: ～900px 業務[3列 x 2行] + 他[3列 x 1行] + [Topics] */
 @media screen and (max-width: 900px) and (orientation: portrait) {
@@ -181,7 +187,7 @@
         width: calc((var(--desktop-grid-column) * 4) + 1rem);
         height: calc(100vh - 40px - 40px - 40px);
         grid-template-columns: repeat(4, var(--desktop-grid-column));
-        grid-template-rows: var(--desktop-top-row) var(--item-title-row) var(--desktop-grid-row) var(--item-title-row) var(--desktop-grid-row);
+        grid-template-rows: var(--desktop-top-row) repeat(2, (--item-title-row)) var(--desktop-grid-row) var(--item-title-row) var(--desktop-grid-row);
     }
     .containers .item-top {
         margin-top: 1.5rem;

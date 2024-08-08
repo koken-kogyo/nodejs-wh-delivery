@@ -29,14 +29,17 @@
         <% kd8330.forEach(function (d) { %>
             <div class="item">
                 <!--a href="/wh/delivery/2024-07-16/C0103/0717/1"-->
-                <a href="/wh/delivery/<%= d.SHIPDT %>/<%= d.TKCD %>/<%= d.XLSSN %>/1">                        
+                <a href="/wh/delivery/<%= d.SHIPDT %>/<%= d.TKCD %>/<%= d.XLSSN %>/1">
                     <div class="item-header"><%= d.TKRNM %></div>
                     <div class="item-subject"><%= d.XLSSN %></div>
-                    <div class="item-title">納品日：
+                    <div class="item-date-title">出荷日：
+                        <date class="item-date"><%= myFunc.a(d.SHIPDT) %></date>
+                    </div>
+                    <div class="item-date-title">納品日：
                         <date class="item-date"><%= myFunc.a(d.DLVRDT) %></date>
                     </div>
-                    <div class="item-title">出荷準備点数：</div>
-                    <div class="item-count"><%= d.CNT %> / <%= d.TTL %><str class="item-title">点</str></div>
+                    <div class="item-count-title">出荷準備点数：</div>
+                    <div class="item-count"><%= d.CNT %> / <%= d.TTL %><str class="item-count-title">点</str></div>
                 </a>
             </div>
         <% }); %>

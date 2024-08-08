@@ -50,8 +50,8 @@ app.get("/directerror/:userid", (req, res) => {
 // 全メーカー出荷指示書TopPage (wh-index)
 app.get("/wh", async (req, res, next) => {
     const d = new Date();
-//    const planday = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
-    const planday = "2024-07-15"; // デバッグ用
+    const planday = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+//    const planday = "2024-07-15"; // デバッグ用
     res.redirect(`/wh/${planday}`);
 });
 
@@ -79,8 +79,10 @@ app.get("/wh/delivery/:planday/:tkcd/:xlssn/:disp", async (req, res, next) => {
     if (!loginCheck(req, res)) return;
     try {
         // 一覧表示
+        const ttl = await mysqlHandler.getKD8330ttlcount(planday, tkcd, xlssn);
+        const cnt = await mysqlHandler.getKD8330count(planday, tkcd, xlssn);
         const kd8330 = await mysqlHandler.getKD8330detail(planday, tkcd, xlssn, disp);
-        res.render("delivery.ejs", {req, planday, kd8330, disp});
+        res.render("delivery.ejs", {req, planday, kd8330, disp, ttl, cnt});
     } catch (err) {
         next(err);
     }

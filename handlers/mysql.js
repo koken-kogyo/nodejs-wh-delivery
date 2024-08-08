@@ -114,10 +114,13 @@ exports.getKD8330overview = async (date) => {
     const kd8330 = await getDatabase(
         "select " +
         "	a.TKCD, replace(b.TKRNM,'ｸﾎﾞﾀ','') as 'TKRNM', a.SHIPDT, a.DLVRDT, a.XLSSN" +
-        "	, count(distinct a.TKHMCD) as 'TTL', count(if(a.HTJUQTY=0,null,HTJUQTY)) as 'CNT' " +
-        "from kd8330 a, m0200 b " +
+        "	, count(distinct a.TKHMCD) as 'TTL' " +
+        "   , count(distinct d.TKHMCD) as 'CNT' " +
+        "from kd8330 a left outer join kd8330 d on " +
+        "     d.TKCD=a.TKCD and d.SHIPDT=a.SHIPDT and d.DLVRDT=a.DLVRDT and d.XLSSN=a.XLSSN and d.ODRQTY=d.HTJUQTY" +
+        "   , m0200 b " +
         "where a.TKCD=b.TKCD and " +
-        "shipdt>=date(?) " +
+        "a.shipdt>=date(?) " +
         "group by " +
         "	a.TKCD, b.TKRNM, a.SHIPDT, a.DLVRDT, a.XLSSN"
         , [date]
@@ -125,10 +128,30 @@ exports.getKD8330overview = async (date) => {
     return kd8330;
 };
 
+// 出荷指示書ファイル明細より出荷予定点数取得
+exports.getKD8330ttlcount = async (shipdt, tkcd, xlssn) => {
+    const kd8330 = await getDatabase(
+        "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
+        "where a.shipdt>=date(?) and a.tkcd=? and a.xlssn=?"
+        , [shipdt, tkcd, xlssn]
+    );
+    return  Number(kd8330[0].TTL);
+};
+
+// 出荷指示書ファイル明細より出荷点数取得
+exports.getKD8330count = async (shipdt, tkcd, xlssn) => {
+    const kd8330 = await getDatabase(
+        "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
+        "where a.ODRQTY=a.HTJUQTY and a.shipdt>=date(?) and a.tkcd=? and a.xlssn=?"
+        , [shipdt, tkcd, xlssn]
+    );
+    return Number(kd8330[0].TTL);
+};
+
 // 出荷指示書ファイル明細取得
 exports.getKD8330detail = async (shipdt, tkcd, xlssn, disp) => {
     const kd8330 = await getDatabase(
-        "select a.*, b.TKRNM from kd8330 a, m0200 b " +
+        "select a.*, b.TKRNM, c.NAME as 'HTTANNM' from kd8330 a left outer join km0010 c on trim(a.HTTANCD)=c.EMPNO, m0200 b " +
         "where a.TKCD=b.TKCD and shipdt>=date(?) and a.tkcd=? and a.xlssn=?"
         , [shipdt, tkcd, xlssn]
     );

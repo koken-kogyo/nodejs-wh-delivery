@@ -2,10 +2,14 @@
 <%
 // ejs内で使用する共通関数群
 myFunc = {
-    // a: 日付形式の文字列を [m/d] で返却
+    // aa: 日付形式の文字列を [hh:mm] で返却
+    aa: function(value){
+        let dateObject = new Date(value);
+        return value == null ? "" : dateObject.getHours() + ":" + ("0" + (dateObject.getMinutes())).slice(-2);
+    },
     a: function(value){
         let dateObject = new Date(value);
-        return (dateObject.getMonth() + 1) + "/" + dateObject.getDate();
+        return value == null ? "" : (dateObject.getMonth() + 1) + "/" + dateObject.getDate();
     },
     // b: 日付形式の文字列を [yyyy-mm-dd] で返却
     b: function(value){

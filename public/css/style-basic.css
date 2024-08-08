@@ -18,6 +18,8 @@ body {
 body > * { box-sizing: border-box; }
 
 header {
+    position: fixed;
+    display: block;
     color: rgb(255,255,255);
     font-size: 24px;
     top: 0;
@@ -52,7 +54,7 @@ footer>p {
 /************************************************************************/
 #logo a {
     display: inline-block;
-    position: relative;
+    position: fixed;
     white-space: nowrap;
     top: 5px;
     left: 1rem;
