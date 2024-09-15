@@ -50,75 +50,55 @@ app.get("/directerror/:userid", (req, res) => {
 // 全メーカー出荷指示書TopPage (wh-index)
 app.get("/wh", async (req, res, next) => {
     const d = new Date();
-    const planday = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
-//    const planday = "2024-07-15"; // デバッグ用
-    res.redirect(`/wh/${planday}`);
+    const today = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+//    const today = "2024-07-15"; // デバッグ用
+    res.redirect(`/wh/${today}`);
 });
 
 // 全メーカー出荷指示書概要 (index.ejs)
-app.get("/wh/:planday", async (req, res, next) => {
-    const planday = req.params.planday;
-    req.session.nextaddr = `/wh/${planday}`;
+app.get("/wh/:today", async (req, res, next) => {
+    const today = req.params.today;
+    req.session.nextaddr = `/wh/${today}`;
     if (!loginCheck(req, res)) return;
     try {
         // 一覧表示
-        const kd8330 = await mysqlHandler.getKD8330overview(planday);
-        res.render("index.ejs", {req, planday, kd8330});
+        const kd8330 = await mysqlHandler.getKD8330overview(today);
+        res.render("index.ejs", {req, today, kd8330});
     } catch (err) {
         next(err);
     }
 });
 
 // 出荷指示書明細 (delivery.ejs)
-app.get("/wh/delivery/:planday/:tkcd/:xlssn/:disp", async (req, res, next) => {
-    const planday = req.params.planday;
+app.get("/wh/delivery/:tkcd/:shipdt/:xlssn/:disp", async (req, res, next) => {
     const tkcd = req.params.tkcd;
+    const shipdt = req.params.shipdt;
     const xlssn = req.params.xlssn;
     const disp = req.params.disp;
-    req.session.nextaddr = `/wh/delivery/${planday}/${tkcd}/${xlssn}/${disp}`;
+    req.session.nextaddr = `/wh/delivery/${tkcd}/${shipdt}/${xlssn}/${disp}`;
     if (!loginCheck(req, res)) return;
-    try {
-        // 一覧表示
-        const ttl = await mysqlHandler.getKD8330ttlcount(planday, tkcd, xlssn);
-        const cnt = await mysqlHandler.getKD8330count(planday, tkcd, xlssn);
-        const kd8330 = await mysqlHandler.getKD8330detail(planday, tkcd, xlssn, disp);
-        res.render("delivery.ejs", {req, planday, kd8330, disp, ttl, cnt});
-    } catch (err) {
+    Promise.all([
+        mysqlHandler.getKD8330Pages(tkcd), 
+        mysqlHandler.getKD8330ttlcount(tkcd, shipdt, xlssn),
+        mysqlHandler.getKD8330count(tkcd, shipdt, xlssn)])
+    .then( async ([pages, ttl, cnt]) => {
+        const kd8330 = await mysqlHandler.getKD8330detail(tkcd, shipdt, xlssn, disp);
+        res.render("delivery.ejs", {req, tkcd, shipdt, xlssn, disp, pages, kd8330, ttl, cnt});
+    }).catch((err) => {
         next(err);
-    }
+    });
 });
 
 // iPhone専用Page (リーダー用)
 // tkcd = C0105:クボタ枚方
 app.get("/i/:tkcd", async (req, res, next) => {
     const d = new Date();
-    const planday = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    const today = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
     try {
         // 一覧表示
         const tkcd = req.params.tkcd.toUpperCase();
-        const kd8330 = await mysqlHandler.getKD8220iPhone(planday, tkcd);
-        res.render("iphone.ejs", {req, planday, kd8330});
-    } catch (err) {
-        next(err);
-    }
-});
-
-// 洩れ検査日報データ検索画面
-app.get("/essearch", async function (req, res, next) {
-    try {
-        const kd8220dic = await mysqlHandler.getKD8220dic();
-        res.render("search.ejs", {req, kd8220dic});
-    } catch (err) {
-        next(err);
-    }
-});
-
-// 洩れ検査日報データ取得 API
-app.get("/es/search/:hmcd", async function (req, res, next) {
-    try {
-        const hmcd = req.params.hmcd;
-        const kd8220hmcd = await mysqlHandler.getKD8220hmcd(hmcd);
-        res.status(200).json(kd8220hmcd);
+        const kd8330 = await mysqlHandler.getKD8220iPhone(today, tkcd);
+        res.render("iphone.ejs", {req, today, kd8330});
     } catch (err) {
         next(err);
     }
@@ -135,7 +115,7 @@ app.use((err, req, res, next) => {
 mysqlHandler.connect
 .then(() => {
     console.log(`MySQL Database [${mysqlHandler.database}] Connected!`);
-    server.listen(PORT, () => {console.log(`Koken APP listen on Port:${PORT}`)});
+    server.listen(PORT, () => {console.log(`Koken Delivery APP listen on Port:${PORT}`)});
 }).catch((err) => {
     console.log("MySQL Database Connection Error!");
     console.log(err);

@@ -110,7 +110,7 @@ exports.isM0500 = async (hmcd) => {
 };
 
 // 出荷指示書ファイルより概要取得
-exports.getKD8330overview = async (date) => {
+exports.getKD8330overview = async (today) => {
     const kd8330 = await getDatabase(
         "select " +
         "	a.TKCD, replace(b.TKRNM,'ｸﾎﾞﾀ','') as 'TKRNM', a.SHIPDT, a.DLVRDT, a.XLSSN" +
@@ -123,37 +123,49 @@ exports.getKD8330overview = async (date) => {
         "a.shipdt>=date(?) " +
         "group by " +
         "	a.TKCD, b.TKRNM, a.SHIPDT, a.DLVRDT, a.XLSSN"
-        , [date]
+        , [today]
     );
     return kd8330;
 };
 
 // 出荷指示書ファイル明細より出荷予定点数取得
-exports.getKD8330ttlcount = async (shipdt, tkcd, xlssn) => {
+exports.getKD8330ttlcount = async (tkcd, shipdt, xlssn) => {
     const kd8330 = await getDatabase(
         "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
-        "where a.shipdt>=date(?) and a.tkcd=? and a.xlssn=?"
-        , [shipdt, tkcd, xlssn]
+        "where a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
+        , [tkcd, shipdt, xlssn]
     );
     return  Number(kd8330[0].TTL);
 };
 
 // 出荷指示書ファイル明細より出荷点数取得
-exports.getKD8330count = async (shipdt, tkcd, xlssn) => {
+exports.getKD8330count = async (tkcd, shipdt, xlssn) => {
     const kd8330 = await getDatabase(
         "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
-        "where a.ODRQTY=a.HTJUQTY and a.shipdt>=date(?) and a.tkcd=? and a.xlssn=?"
-        , [shipdt, tkcd, xlssn]
+        "where a.ODRQTY=a.HTJUQTY and a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
+        , [tkcd, shipdt, xlssn]
     );
     return Number(kd8330[0].TTL);
 };
 
 // 出荷指示書ファイル明細取得
-exports.getKD8330detail = async (shipdt, tkcd, xlssn, disp) => {
+exports.getKD8330detail = async (tkcd, shipdt, xlssn, disp) => {
     const kd8330 = await getDatabase(
-        "select a.*, b.TKRNM, c.NAME as 'HTTANNM' from kd8330 a left outer join km0010 c on trim(a.HTTANCD)=c.EMPNO, m0200 b " +
-        "where a.TKCD=b.TKCD and shipdt>=date(?) and a.tkcd=? and a.xlssn=?"
-        , [shipdt, tkcd, xlssn]
+        "select a.*, b.TKRNM, c.NAME as 'HTTANNM', d.PODRNM, d.PLNQTY-d.ZAIQTY-d.JIQTY as 'YGW' " + 
+        "from kd8330 a left outer join km0010 c on trim(a.HTTANCD)=c.EMPNO " + 
+        "left outer join kd8010 d on d.HMCD in (a.TKHMCD, a.TKHMCD), m0200 b " + 
+        "where a.TKCD=b.TKCD and a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
+        , [tkcd, shipdt, xlssn]
     );
     return kd8330;
 };
+
+// 出荷指示書の対象Page情報を取得
+const getKD8330Pages = async (tkcd) => {
+    const sql = "select  DATE_FORMAT(SHIPDT, '%Y-%m-%d') as 'SHIPDT',XLSSN from kd8330 where TKCD=? and SHIPDT>curdate() group by SHIPDT,XLSSN"
+    const arrayobj = await getDatabase(sql, [tkcd]);
+    const array = [];
+    for (let row of arrayobj) {array.push(row.SHIPDT + ":" + row.XLSSN + ":")};
+    return array;
+};
+exports.getKD8330Pages = getKD8330Pages;

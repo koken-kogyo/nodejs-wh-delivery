@@ -36,8 +36,45 @@
     font-weight: 600;
     text-align: center;
 }
+.menu-img {
+    margin-top: 20px;
+    margin-inline: 10px;
+    width: 40px;
+}
+.menu-img img {
+    margin-top: -3px;
+    height: 40px;
+}
+#groups .allow {
+    padding: 0.6em;
+    border-radius: 3px;
+    background-color: rgb(40, 40, 40);
+    color: #eee;
+}
+#groups .allow:hover {
+    border-radius: 3px;
+    background-color: rgb(24, 94, 164);
+    color: #eee;
+}
+#groups .noallow {
+    padding: 0.6em;
+    border-radius: 3px;
+    background-color: rgb(164, 164, 164);
+    color: #eee;
+}
+#groups .home {
+    padding: 0.6em;
+    border-radius: 3px;
+    background-color: rgb(100, 100, 100, 0.6);
+    color: #eee;
+}
+#groups .home:hover {
+    border-radius: 3px;
+    background-color: rgb(24, 94, 164);
+    color: #eee;
+}
 
-  /* CheckBox Button 1 */
+/* CheckBox Button 1 */
   .button-cover {
     height: 100px;
     margin: 20px;
@@ -105,7 +142,7 @@
   }
 
   #button-1 .knobs:before {
-    content: "YES";
+    content: "NO";
     position: absolute;
     top: 3px;
     left: 3px;
@@ -117,15 +154,15 @@
     text-align: center;
     line-height: 1;
     padding: 8px 4px;
-    background-color: #03a9f4;
+    background-color: #f39d97;
     border-radius: 50%;
-    transition: 0.3s cubic-bezier(0.18, 0.89, 0.35, 1.15) all;
+    transition: 0.2s cubic-bezier(0.18, 0.89, 0.35, 1.15) all;
   }
   
   #button-1 .checkbox:checked + .knobs:before {
-    content: "NO";
+    content: "YES";
     left: 30px;
-    background-color: #f39d97;
+    background-color: #03a9f4;
   }
   
   #button-1 .checkbox:checked ~ .layer {
@@ -161,7 +198,7 @@
 /*  明細共通
 /* =========================================================================== */
 #details {
-    width: 980px;
+    width: 1080px;
     margin: auto;
     padding-top: 140px;
     z-index: 700;
@@ -252,19 +289,45 @@
 #details-index .lef {
     text-align: left;
 }
+#details-index .w800 {
+    font-weight: 800;
+}
 #details-index .s3 {
     text-align: left;
 }
+/* s4:出荷準備完了 */
 #details-index .s4 {
-    text-align: left;
+    border-radius: 3px;
+    background-color: rgba(100, 100, 100, 0.4);
+}
+/* sD:重複品番色付け */
+#details-index .sD {
     border-radius: 3px;
     background-color: rgba(255, 105, 180, 0.3);
 }
-#details-index .s8 {
-    text-align: left;
+/* sI:検区RFH始まり色付け */
+#details-index .sI {
     border-radius: 3px;
-    background-color: rgba(250, 240, 20, 0.5);
+    color : rgba(0, 0, 0, 0.8);
+    background-color: rgba(100, 250, 120, 0.8);
 }
+/* sY:YGWのY */
+#details-index .sY {
+    color: #E02020;
+    vertical-align: middle;
+    border-radius: 3px;
+    background-color: rgba(250, 240, 20, 0.8);
+    animation: blinkAnimeSY 1.5s  infinite alternate;
+}
+@keyframes blinkAnimeSY {
+    0%{ color : rgba(10, 10, 10, 0.6);   background:rgba(250, 240, 20, 0.2) }
+  100%{ color : rgba(250, 20, 20, 0.9); background:rgba(250, 240, 20, 0.9)   }
+}
+
+#details-index .red {
+    color: rgba(250, 20, 20, 0.6);
+}
+
 /* =========================================================================== */
 /*  selector明細
 /* =========================================================================== */

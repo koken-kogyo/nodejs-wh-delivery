@@ -6,6 +6,9 @@
     <title>物流出荷指示書</title>
     <link rel="stylesheet" href="/static/css/style-basic.css">
     <link rel="stylesheet" href="/static/css/style-delivery.css">
+    <link href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" rel="stylesheet">
+    <!-- レスポンシブwebデザインの指定 --><!-- デバイスの横幅合わせ,等倍表示（半角空白入れるな！） -->
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <!-- Common JavaScript -->
     <script src="/static/javascripts/_myfunctions.js"></script>
 </head>
@@ -14,28 +17,41 @@
     <%- include("_myfunctions.ejs") %>
 
     <!-- Header -->
-    <%- include("_header.ejs", { title: "出荷指示書" + myFunc.c(planday), req }) %>
+    <%- include("_header.ejs", { title: "出荷指示書" + myFunc.c(shipdt), req }) %>
 
     <!-- Groups -->
     <div id="navigate">
     <div id="groups" class="containers">
     <% if (locals.err) { %>
-        <ul><li><a href="jp.co.cimtops.ireporter://open">
-        <img src="/static/images/i-reporter.png"></a></li></ul>
+        
     <% } else { %>
         <div id="menu">
 
-            <!-- 得意先 -->
-            <div class="menu-item">得意先：<br><div class="menu-data">枚方(C0105)</div></div>
+            <% let osType = myRequestHeader.osType(req); %>
 
-            <!-- 出荷日 -->
-            <div class="menu-item">出荷日：<br><div class="menu-data"><%= kd8330[0].SHIPDT %></div></div>
+            <!-- 前日ボタン -->
+            <% let idxY = pages.findIndex((dt) => { return dt === shipdt+":"+xlssn+":" }); %>
+            <% if (idxY===0) { %>
+                <div class="menu-img"><i class="fas fa-step-backward noallow"></i></div>
+            <% } else { %>
+                <div class="menu-img"><a href="javascript:prevpage()"><i class="fas fa-step-backward allow"></i></a></div>
+                <input type="hidden" id="prevpage" name="prevpage" value="<%= pages[idxY-1] %>">
+            <% }; %>
+
+            <!-- ホーム ボタン -->
+            <div class="menu-img"><a href="/wh"><i class="fas fa-home home"></i></a></div>
+
+            <!-- 得意先 -->
+            <div class="menu-item">得意先：<br><div class="menu-data">枚方(<%= tkcd %>)</div></div>
 
             <!-- 受注納期 -->
             <div class="menu-item">受注納期：<br><div class="menu-data"><%= kd8330[0].DLVRDT %></div></div>
 
+            <!-- 出荷点数 -->
+            <div class="menu-item">出荷準備完了：<br><div class="menu-data"><%= cnt %> / <%= ttl %>点</div></div>
+
             <!-- 機能切り替え -->
-            <div class="menu-item">未処理のみ表示
+            <div class="menu-item">全て表示：
                 <div class="button r" id="button-1">
                     <input type="checkbox" class="checkbox" id="checkDisp" onchange="checkDispChange()" />
                     <div class="knobs"></div>
@@ -43,14 +59,20 @@
                 </div>
             </div>
 
-            <!-- 出荷点数 -->
-            <div class="menu-item">出荷準備完了：<br><div class="menu-data"><%= cnt %> / <%= ttl %>点</div></div>
-
-            <!-- 品番検索 ボタン -->
-            <div class="menu-img"><a href="/wh"><img style="margin-top:20px;margin-right:10px;width:40px;" src="/static/images/home50x50.png"></a></div>
+            <!-- 後日ボタン -->
+            <% let idxT = pages.findIndex((dt) => { return dt == shipdt+":"+xlssn+":" }); %>
+            <% if (idxT===(pages.length-1)) { %>
+                <div class="menu-img"><i class="fas fa-step-forward noallow"></i></div>
+            <% } else { %>
+                <div class="menu-img"><a href="javascript:nextpage()"><i class="fas fa-step-forward allow"></i></a></div>
+                <input type="hidden" id="nextpage" name="nextpage" value="<%= pages[idxT+1] %>">
+            <% }; %>
 
         </div>
-        <input type="hidden" id="planday" name="planday" value="<%= planday; %>">
+        <!-- URLパラメータを保存 -->
+        <input type="hidden" id="tkcd" name="tkcd" value="<%= tkcd %>">
+        <input type="hidden" id="shipdt" name="shipdt" value="<%= shipdt %>">
+        <input type="hidden" id="xlssn" name="xlssn" value="<%= xlssn %>">
         <input type="hidden" id="disp" name="disp" value="<%= disp %>">
         <% }; %>
     </div>
@@ -73,33 +95,41 @@
     <% } else { %>
         <table id="tbl1">
             <tr>
-                <th width="10px" >No</th>
-                <th width="50px" >ﾛｹｰｼｮﾝ</th>
-                <th width="160px">得意先品番</th>
-                <th width="50px" >納入先</th>
-                <th width="5px" >ｶ</th>
-                <th width="50px" >指示数</th>
-                <th width="50px" class="th-small">出荷<br>準備</th>
-                <th width="10px" >前</th>
-                <th width="10px" >当</th>
-                <th width="20px" >検区</th>
-                <th width="50px" >容器名</th>
-                <th width="50px" >収容数</th>
-                <th width="50px" class="th-small">紐色<br>数量</th>
-                <th width="120px" >社内品番</th>
-                <th width="50px" >前工程</th>
-                <th width="50px" class="th-small">出荷準<br>備担当</th>
-                <th width="50px" class="th-small">出荷準<br>備日時</th>
+                <th rowspan="2" width="10px" >No</th>
+                <th rowspan="2" width="50px" >ﾛｹｰｼｮﾝ</th>
+                <th rowspan="2" width="150px" class="lef">　得意先品番</th>
+                <th rowspan="2" width="50px" >納入先</th>
+                <th rowspan="2" width="5px"  >ｶ</th>
+                <th rowspan="2" width="50px" >指示数</th>
+                <th rowspan="2" width="10px" >前</th>
+                <th rowspan="2" width="10px" >当</th>
+                <th rowspan="2" width="20px" >検区</th>
+                <th rowspan="2" width="50px" >容器名</th>
+                <th rowspan="2" width="50px" >収容数</th>
+                <th rowspan="2" width="50px" class="th-small">紐色<br>数量</th>
+                <th rowspan="2" width="120px">社内品番</th>
+                <th rowspan="2" width="70px" class="th-small">前々工程</th>
+                <th rowspan="2" width="70px" >前工程</th>
+                <th rowspan="2" width="40px" class="red">YGW</th>
+                <th colspan="3" class="th-small">ハンディ情報</th>
+            </tr>
+            <tr>
+                <th width="50px" class="th-small">担当者</th>
+                <th width="50px" class="th-small">照合時</th>
+                <th width="50px" class="th-small">準備数</th>
             </tr>
             <% kd8330.forEach(function (d) { %>
+                <% if (d.ODRQTY==d.HTJUQTY && d.HTJUQTY != 0) { %>
+            <tr style="display: none">
+                <% } else { %>
             <tr>
+                <% }; %>
                 <td class=""><%= d.NO %></td>
                 <td class="td-small"><%= d.SKBUCD %></td>
-                <td class="td-big s3"><%= d.TKHMCD %></td>
+                <td class="td-big lef">　<%= d.TKHMCD %></td>
                 <td class="td-small"><%= d.NNCD %></td>
                 <td class="td-small"><%= d.BOXNUM %></td>
-                <td class="td-small"><%= d.ODRQTY==0 ? "" : d.ODRQTY %></td>
-                <td class="td-small"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
+                <td class="td-small w800"><%= d.ODRQTY==0 ? "" : d.ODRQTY %></td>
                 <td class="td-small"><%= d.YESTERDAY %></td>
                 <td class="td-small"><%= d.TODAY %></td>
                 <td class="td-small"><%= d.QCKBN %></td>
@@ -107,9 +137,16 @@
                 <td class="td-small"><%= d.INSUU==0 ? "" : d.INSUU %></td>
                 <td class="td-small"><%= d.SKHIASU %></td>
                 <td class="td-small"><%= d.HMCD %></td>
+                <td class="td-small"><%= d.PODRNM %></td>
                 <td class="td-small"><%= d.ODRNM %></td>
-                <td class="td-small"><%= d.HTTANNM %></td>
-                <td class="td-small"><%= myFunc.aa(d.HTJUDT) %></td>
+                <td class="td-big <%= d.YGW ? 'sY' : '' %>"><%= d.YGW %></td>
+                <td class="td-small"><%= d.HTJUQTY==0 ? "-" : d.HTTANNM %></td>
+                <td class="td-small"><%= d.HTJUQTY==0 ? "-" : myFunc.aa(d.HTJUDT) %></td>
+                <% if (d.ODRQTY==d.HTJUQTY && d.HTJUQTY != 0) { %>
+                    <td class="td-small s4 w800"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
+                <% } else { %>
+                    <td class="td-small"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
+                <% }; %>
             </tr>
             <% }); %>
         </table>
@@ -127,42 +164,76 @@
     <!-- ブラウザ読み込み完了後のJavaScriptを記述 -->
     <script>
         
+        // 起動直後に実行させる処理
         colorDuplicationInspect();
-
-        // 得意先品番の重複データ・検区に色付け処理
+        
+        // １．重複品番色付け、２．検区色付け、３．当日以外のYGW列非表示
         function colorDuplicationInspect() {
             //alert(tbl1.rows.length);
+            const shipdt = document.getElementById("shipdt").value;
             const disp = document.getElementById("disp").value;
+            // 当日以外の場合は、YGW列を非表示にする(1)(table.th)
+            const d = new Date();
+            const today = "2024-09-16"; //d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + (d.getDate())).slice(-2);
+            if (shipdt != today) {
+                tbl1.rows[0].cells[13].style.display = "none";
+                tbl1.rows[0].cells[15].style.display = "none";
+                document.getElementById("details").style.width = "980px";
+            }
+            // テーブルの数分ループ処理
             const row = tbl1.rows.length;
-            for( var i = 1; i <= row; i++ ){
+            for( var i = 2; i < row; i++ ){
                 // 品番重複行は色付け
-                if (tbl1.rows[i].cells[2].innerHTML == tbl1.rows[i + 1].cells[2].innerHTML) {
-                    tbl1.rows[i    ].cells[2].classList.add("s4");
-                    tbl1.rows[i + 1].cells[2].classList.add("s4");
-                }
-                //出荷準備完了行は消す
-                if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[6].innerHTML) {
-                    tbl1.rows[i].style.display = "none";
+                if (i < row-2 && tbl1.rows[i].cells[2].innerHTML == tbl1.rows[i + 1].cells[2].innerHTML) {
+                    tbl1.rows[i    ].cells[2].classList.add("sD");
+                    tbl1.rows[i + 1].cells[2].classList.add("sD");
                 }
                 // 検区RFH始まり
-                let tmp = tbl1.rows[i].cells[9].innerHTML;
+                let tmp = tbl1.rows[i].cells[8].innerHTML;
                 if (tmp.substring(0, 1) == "R" || tmp.substring(0, 1) == "F" || tmp.substring(0, 1) == "H") {
-                    tbl1.rows[i].cells[9].classList.add("s8");
+                    tbl1.rows[i].cells[8].classList.add("sI");
+                }
+                // 当日以外の場合は、YGW列を非表示にする(2)(table.tr)
+                if (shipdt != today) {
+                    tbl1.rows[i].cells[13].style.display = "none";
+                    tbl1.rows[i].cells[15].style.display = "none";
+                }
+                // 出荷準備完了した行は非表示にする
+                if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[6].innerHTML) {
+                    tbl1.rows[i].style.display = "none";
                 }
             }
         }
         // CheckBoxChangeイベント
         function checkDispChange() {
             const row = tbl1.rows.length;
-            for( var i = 1; i <= row; i++ ){
+            for( var i = 2; i <= row; i++ ){
                 if (checkDisp.checked == false) {
-                    if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[6].innerHTML) {
+                    if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[18].innerHTML) {
                        tbl1.rows[i].style.display = "none";
                     }
                 } else {
                     tbl1.rows[i].style.display = "";
                 }
             }
+        }
+        // 前ページ遷移
+        function prevpage(){
+            const prevpage = document.getElementById("prevpage").value;
+            const tkcd =  document.getElementById("tkcd").value;
+            const shipdt = prevpage.split(":")[0];
+            const xlssn = prevpage.split(":")[1];
+            const disp = document.getElementById("disp").value;
+            location.href = `/wh/delivery/${tkcd}/${shipdt}/${xlssn}/${disp}`;
+        }
+        // 次ページ遷移
+        function nextpage(){
+            const nextpage = document.getElementById("nextpage").value;
+            const tkcd =  document.getElementById("tkcd").value;
+            const shipdt = nextpage.split(":")[0];
+            const xlssn = nextpage.split(":")[1];
+            const disp = document.getElementById("disp").value;
+            location.href = `/wh/delivery/${tkcd}/${shipdt}/${xlssn}/${disp}`;
         }
         function scriptTest(){
             var userAgent = window.navigator.userAgent.toLowerCase(); 

@@ -28,8 +28,8 @@
         </div>
         <% kd8330.forEach(function (d) { %>
             <div class="item">
-                <!--a href="/wh/delivery/2024-07-16/C0103/0717/1"-->
-                <a href="/wh/delivery/<%= d.SHIPDT %>/<%= d.TKCD %>/<%= d.XLSSN %>/1">
+                <!--a href="/wh/delivery/C0103/2024-07-16/0717/1"-->
+                <a href="/wh/delivery/<%= d.TKCD %>/<%= d.SHIPDT %>/<%= d.XLSSN %>/1">
                     <div class="item-header"><%= d.TKRNM %></div>
                     <div class="item-subject"><%= d.XLSSN %></div>
                     <div class="item-date-title">出荷日：
