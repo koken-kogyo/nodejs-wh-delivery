@@ -55,7 +55,7 @@ const login2 = async (req, res, next) => {
             if (userinfo[0].PASSWD == password.toUpperCase()) {
                 req.session.userid = userid;
                 req.session.jpname = userinfo[0].TANNM;
-                res.redirect("/" + req.params.nextaddr + "/" + req.params.odcd);
+                res.redirect("/" + req.params.nextaddr + "/");
             } else {
                 console.log("password faild");
                 res.redirect("/directerror/" + userid);

@@ -151,21 +151,52 @@ exports.getKD8330count = async (tkcd, shipdt, xlssn) => {
 // 出荷指示書ファイル明細取得
 exports.getKD8330detail = async (tkcd, shipdt, xlssn, disp) => {
     const kd8330 = await getDatabase(
-        "select a.*, b.TKRNM, c.NAME as 'HTTANNM', d.PODRNM, d.PLNQTY-d.ZAIQTY-d.JIQTY as 'YGW' " + 
+        "select a.*, b.TKRNM, c.NAME as 'HTTANNM', d.PODRNM AS 'YPODRNM', d.ODRNM AS 'YODRNM' " + 
+        ", d.PKZAIQTY, d.PJIDT, d.PJIQTY, d.PLNQTY, d.ZAIQTY, d.KZAIQTY, d.JIDT, d.JIQTY " + 
         "from kd8330 a left outer join km0010 c on trim(a.HTTANCD)=c.EMPNO " + 
-        "left outer join kd8010 d on d.HMCD in (a.TKHMCD, a.TKHMCD), m0200 b " + 
+        "left outer join kd8010 d on d.HMCD in (a.TKHMCD, a.HMCD) and d.OPDATE=?, m0200 b " + 
         "where a.TKCD=b.TKCD and a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
-        , [tkcd, shipdt, xlssn]
+        , [shipdt, tkcd, shipdt, xlssn]
     );
     return kd8330;
 };
 
 // 出荷指示書の対象Page情報を取得
 const getKD8330Pages = async (tkcd) => {
-    const sql = "select  DATE_FORMAT(SHIPDT, '%Y-%m-%d') as 'SHIPDT',XLSSN from kd8330 where TKCD=? and SHIPDT>curdate() group by SHIPDT,XLSSN"
+    const sql = "select DATE_FORMAT(SHIPDT, '%Y-%m-%d') as 'SHIPDT',XLSSN from kd8330 " + 
+        "where TKCD=? and SHIPDT > date_add(curdate(), interval -1 day) group by SHIPDT,XLSSN"
     const arrayobj = await getDatabase(sql, [tkcd]);
     const array = [];
     for (let row of arrayobj) {array.push(row.SHIPDT + ":" + row.XLSSN + ":")};
     return array;
 };
 exports.getKD8330Pages = getKD8330Pages;
+
+// [MySQL] 品目手順マスタと工程ごとの在庫数を取得する API (MySQL Version D0520作成すれば動作する)
+const getM0510zai = async (hmcd) => {
+    const sql = 
+        "select * from (" + 
+        "select null as HMNM, a.KTSEQ, a.KTCD, k.KTNM, a.ODCD, o.ODRNM, a.JIKBN" + 
+        ", a.WKNOTE, a.WKCOMMENT, ifnull(z.ZAIQTY,0) as 'ZAIQTY' " + 
+        "from M0510 a left join D0520 z on a.HMCD=z.HMCD and a.KTCD=z.KTCD, M0410 k, M0300 o " + 
+        "where a.KTCD=k.KTCD and a.ODCD=o.ODCD " +
+        "and a.VALDTF=(select max(tmp.VALDTF) from M0510 tmp where tmp.HMCD=a.HMCD) " + 
+        "and mod(a.KTSEQ, 10) = 0 " + 
+        "and a.HMCD=? " + 
+        "order by a.HMCD, a.KTSEQ DESC" + 
+        ") res limit 5"
+        const m0510zai = await getDatabase(sql, [hmcd]);
+    return m0510zai;
+};
+exports.getM0510zai = getM0510zai;
+
+// [MySQL] 品目マスタの品名と最終工程の在庫数を取得する API (MySQL Version D0520作成すれば動作する)
+// D0520:在庫Fは最終工程コードがnullで品目手順マスタからでは取得できない為
+const getM0500zai = async (hmcd) => {
+    const sql = 
+        "select m.HMNM, z.ZAIQTY from M0500 m, D0520 z where m.HMCD=z.HMCD and z.KTCD is NULL " + 
+        "and m.HMCD=?";
+    const m0500zai = await getDatabase(sql, [hmcd]);
+    return m0500zai;
+};
+exports.getM0500zai = getM0500zai;

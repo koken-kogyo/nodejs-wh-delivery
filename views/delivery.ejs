@@ -79,6 +79,36 @@
     <hr>
     </div>
 
+    <!-- Popup Window -->
+    <div id="popWin">
+        <div class="pop-win">
+            <div class="modal-body">
+                <table id="popTitle">
+                    <tr>
+                        <th width="38px" class="left indent">品番</th>
+                        <th width="200px" class="left indent" id="popHMCD">-</th>
+                        <th id="popHMNM">-</th>
+                    </tr>
+                </table>
+                <table id="popTable">
+                <tr>
+                    <th rowspan="2" width="40px">順序</th>
+                    <th width="240px" colspan="2" class="left indent">工程</th>
+                    <th width="240px" colspan="2" class="left indent">手配先</th>
+                    <th width="50px">実績</th>
+                </tr>
+                <tr>
+                    <th colspan="2" class="left indent">作業内容</th>
+                    <th colspan="2" class="left indent">作業注釈</th>
+                    <th class="red">在庫数</th>
+                </tr>
+                </table>
+            </div>
+            <button id="close">閉じる</button>
+        </div>
+    </div>
+
+
     <!-- Details -->
     <div id="top"></div>
 
@@ -137,10 +167,19 @@
                 <td class="td-small"><%= d.INSUU==0 ? "" : d.INSUU %></td>
                 <td class="td-small"><%= d.SKHIASU %></td>
                 <td class="td-small"><%= d.HMCD %></td>
-                <td class="td-small"><%= d.PODRNM %></td>
-                <td class="td-small"><%= d.ODRNM %></td>
-                <td class="td-big <%= d.YGW ? 'sY' : '' %>"><%= d.YGW %></td>
-                <td class="td-small"><%= d.HTJUQTY==0 ? "-" : d.HTTANNM %></td>
+                <td class="td-small"><%= d.YPODRNM %></td>
+                <td class="td-small td-a"><%= d.ODRNM %></td>
+                <% if  ( d.PLNQTY-d.ZAIQTY>0 ) { %>
+                    <% if  ( d.PLNQTY-d.ZAIQTY <= d.JIQTY ) { %>
+                        <td class="td-big s4 w800"><%= d.PLNQTY - d.ZAIQTY %><br><%= myFunc.aa(d.JIDT) %></td>
+                    <% } else { %>
+                        <td class="td-big sY"><%= d.PLNQTY - d.ZAIQTY %><%= d.JIQTY==0 ? '' : '('+d.JIQTY+')' %></td>
+                    <% }; %>
+                <% } else { %>
+                    <td class="td-small"></td>
+                <% }; %>
+                
+                <td class="td-large-small"><%= d.HTJUQTY==0 ? "-" : d.HTTANNM %></td>
                 <td class="td-small"><%= d.HTJUQTY==0 ? "-" : myFunc.aa(d.HTJUDT) %></td>
                 <% if (d.ODRQTY==d.HTJUQTY && d.HTJUQTY != 0) { %>
                     <td class="td-small s4 w800"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
@@ -156,6 +195,7 @@
     <% }; %>
     </div>
     </div>
+
     <div id="scroll-bottom"></div>
 
     <!-- Footer -->
@@ -174,7 +214,8 @@
             const disp = document.getElementById("disp").value;
             // 当日以外の場合は、YGW列を非表示にする(1)(table.th)
             const d = new Date();
-            const today = "2024-09-16"; //d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + (d.getDate())).slice(-2);
+            const today = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + (d.getDate())).slice(-2);
+            // const today = "2024-09-16";
             if (shipdt != today) {
                 tbl1.rows[0].cells[13].style.display = "none";
                 tbl1.rows[0].cells[15].style.display = "none";
@@ -243,6 +284,152 @@
         async function iReporter(){
             location.href = "jp.co.cimtops.ireporter://open";
         }
+
+        window.addEventListener('load', function () {
+            let column_no = 0; //今回クリックされた列番号
+            let column_no_prev = 0; //前回クリックされた列番号
+            document.querySelectorAll('#tbl1 th').forEach(elm => {
+                elm.onclick = function () {
+                    //alert(this); HTMLTableCellElement
+                    column_no = this.cellIndex; //クリックされた列番号
+                    let table = this.parentNode.parentNode.parentNode;
+                    let sortType = 0; //0:数値 1:文字
+                    let sortArray = new Array; //クリックした列のデータを全て格納する配列
+                    for (let r = 2; r < table.rows.length; r++) {
+                        //行番号と値を配列に格納
+                        let column = new Object;
+                        column.row = table.rows[r];
+                        column.value = table.rows[r].cells[column_no].textContent;
+                        sortArray.push(column);
+                        //数値判定
+                        if (isNaN(Number(column.value))) {
+                            sortType = 1; //値が数値変換できなかった場合は文字列ソート
+                        }
+                    }
+                    if (sortType == 0) { //数値ソート
+                        if (column_no_prev == column_no) { //同じ列が2回クリックされた場合は降順ソート
+                            sortArray.sort(compareNumberDesc);
+                        } else {
+                            sortArray.sort(compareNumber);
+                        }
+                    } else { //文字列ソート
+                        if (column_no_prev == column_no) { //同じ列が2回クリックされた場合は降順ソート
+                            sortArray.sort(compareStringDesc);
+                        } else {
+                            sortArray.sort(compareString);
+                        }
+                    }
+                    //ソート後のTRオブジェクトを順番にtbodyへ追加（移動）
+                    let tbody = this.parentNode.parentNode;
+                    for (let i = 0; i < sortArray.length; i++) {
+                        tbody.appendChild(sortArray[i].row);
+                    }
+                    //昇順／降順ソート切り替えのために列番号を保存
+                    if (column_no_prev == column_no) {
+                        column_no_prev = -1; //降順ソート
+                    } else {
+                        column_no_prev = column_no;
+                    }
+                };
+            });
+            // 前工程クリックイベントハンドラー
+            document.querySelectorAll('#details-index .td-a').forEach(elm => {
+                elm.onclick = function () {
+                    if (this instanceof HTMLTableCellElement) {
+                        const column = this.cellIndex;
+                        const tr = this.parentNode;
+                        const row = tr.sectionRowIndex;
+                        const tkhmcd = tbl1.rows[row].cells[2].innerText.trim();
+                        const hmcd = tbl1.rows[row].cells[12].innerText.trim();
+                        // alert(`行row=${ row } 列column=${ column }`);
+
+                        // 品目手順ポップアップ表示
+                        popWin(hmcd=="" ? tkhmcd : hmcd);
+
+                    }
+                }
+            });
+        });
+        //数値ソート（昇順）
+        function compareNumber(a, b)
+        {
+            return a.value - b.value;
+        }
+        //数値ソート（降順）
+        function compareNumberDesc(a, b)
+        {
+            return b.value - a.value;
+        }
+        //文字列ソート（昇順）
+        function compareString(a, b) {
+            if (a.value < b.value) {
+                return -1;
+            } else {
+                return 1;
+            }
+            return 0;
+        }
+        //文字列ソート（降順）
+        function compareStringDesc(a, b) {
+            if (a.value > b.value) {
+                return -1;
+            } else {
+                return 1;
+            }
+            return 0;
+        }
+
+        // 品目手順ポップアップ表示
+        function popWin(hmcd) {
+            
+            // (1) 品目手順取得API
+            fetch(`/wh/m0510zai/${hmcd}`)
+            .then(response => response.json())
+            .then(data => {
+                // (2) ポップアップ画面を表示
+                const popWin = document.getElementById("popWin");
+                popWin.style.display = "flex";
+                document.getElementById("popHMCD").innerText = hmcd;
+                document.getElementById("popHMNM").innerText = data[0].HMNM;
+
+                // (3) 今表示されているテーブルのヘッダー以外を全削除
+                let table = document.getElementById("popTable");
+                do {
+                    if (table.rows.length > 2) {table.deleteRow(-1);}
+                } while (table.rows.length > 2);
+                // (4) APIで取得したデータをテーブ行に追加
+                data.forEach(function (d) {
+                    let newRow1 = table.insertRow();
+                    appendTD(newRow1, d.KTSEQ, "center", "2", "");
+                    appendTD(newRow1, d.KTCD, "indent", "", "");
+                    appendTD(newRow1, d.KTNM, "indent", "", "");
+                    appendTD(newRow1, d.ODCD, "indent", "", "");
+                    appendTD(newRow1, d.ODRNM, "indent", "", "");
+                    appendTD(newRow1, (d.JIKBN=="1") ? "有" : "-", "center", "", "");
+
+                    let newRow2 = table.insertRow();
+                    appendTD(newRow2, (d.WKNOTE==null) ? "" : d.WKNOTE, "indent", "", "2");
+                    appendTD(newRow2, (d.WKCOMMENT==null) ? "" : d.WKCOMMENT, "indent", "", "2");
+                    appendTD(newRow2, (d.ZAIQTY==0) ? "-" : d.ZAIQTY, "center red", "", "");
+                });
+                // (5) ポップアップ閉じるイベントハンドラー
+                const close = document.getElementById("close");
+                close.addEventListener("click", () => {
+                    popWin.style.display = "none";
+                });
+                close.focus();
+            });
+            
+        }
+        function appendTD(newrow, str, name, rowspan, colspan){
+            let newCell = newrow.insertCell();
+            let newText = document.createTextNode(str);
+            newCell.appendChild(newText);
+            if (rowspan != "") newCell.setAttribute("rowspan", rowspan);
+            if (colspan != "") newCell.setAttribute("colspan", colspan);
+            if (name != "") newCell.className = name;
+        }
+
     </script>
 
 </body>

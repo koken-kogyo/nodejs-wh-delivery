@@ -6,6 +6,7 @@ const favicon = require("serve-favicon");
 // User定義
 const { PORT, log4jsConfig } = require("./config.js");
 const mysqlHandler = require("./handlers/mysql.js");
+const oracleHandler = require("./handlers/oracle.js");
 const userid = "";
 const { login, login2, loginCheck, csvwrite, sendMail, myOS } = require("./handlers/server.js");
 // log4jsロガー設定
@@ -41,7 +42,7 @@ app.get( "/", (req, res) => res.redirect(`https://${req.hostname}/`));
 app.get( "/login", (req, res) => res.render("login.ejs", {err: "", userid}));
 app.post("/login", (req, res) => login(req, res));
 app.get("/logout", (req, res) => req.session.destroy(() => res.redirect(`https://${req.hostname}/`)));
-app.get("/direct/:userid/:password/:nextaddr/:odcd", (req, res) => login2(req, res));
+app.get("/direct/:userid/:password/:nextaddr/", (req, res) => login2(req, res));
 app.get("/directerror/:userid", (req, res) => {
     const userid = req.params.userid;
     res.render("login.ejs", {err: "自動ログイン設定を確認してください", userid})
@@ -87,6 +88,28 @@ app.get("/wh/delivery/:tkcd/:shipdt/:xlssn/:disp", async (req, res, next) => {
     }).catch((err) => {
         next(err);
     });
+});
+
+// [Oracle] 品目手順マスタと工程ごとの在庫数を取得する API
+app.get("/wh/m0510zai/:hmcd", async (req, res, next) => {
+    try {
+        const hmcd = req.params.hmcd;
+        const m0510zai = await oracleHandler.getM0510zai(hmcd);
+        const m0500zai = await oracleHandler.getM0500zai(hmcd);
+        m0510zai[0].HMNM = m0500zai[0].HMNM;
+        // 実績あり最終工程の在庫数が０だった場合、在庫Fのnull工程の在庫数を転送
+        for (let i = 0; i < m0510zai.length; i++) {
+            if (m0510zai[i].JIKBN == "1") {
+                if (m0510zai[i].ZAIQTY == 0 && m0500zai[0].ZAIQTY != 0) {
+                    m0510zai[i].ZAIQTY = m0500zai[0].ZAIQTY;
+                }
+                break;
+            }
+        };
+       res.status(200).json(m0510zai);
+    } catch (err) {
+        next(err);
+    }
 });
 
 // iPhone専用Page (リーダー用)

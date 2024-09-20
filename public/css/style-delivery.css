@@ -65,7 +65,7 @@
 #groups .home {
     padding: 0.6em;
     border-radius: 3px;
-    background-color: rgb(100, 100, 100, 0.6);
+    background-color: rgb(30, 30, 30, 0.9);
     color: #eee;
 }
 #groups .home:hover {
@@ -220,6 +220,11 @@
     border: solid 0.5px #1414141c;
     background-color: rgb(225, 238, 253);
 }
+#details-index th:hover {
+    cursor: pointer;
+    color: rgba(30, 80, 80, 0.8);
+    background-color: rgba(180, 250, 180);
+}
 #details-index .th-big {
     font-size: 1.4rem;
 }
@@ -229,14 +234,14 @@
 #details-index .th-large-small {
     font-size: 0.6rem;
 }
-#details-index th a {
-    display: inline-block;
-    padding: 14px 7px;
+#details-index .td-a {
     color: cadetblue;
-    text-decoration: none;
+    font-weight: 600;
 }
-#details-index th a:hover {
-    color: rgb(235, 248, 253);
+#details-index .td-a:hover {
+    cursor: pointer;
+    color: rgba(30, 80, 80, 0.8);
+    background-color: rgba(180, 250, 180);
 }
 #details-index .c-btn {
     background-color: rgb(225, 238, 253);
@@ -317,7 +322,7 @@
     vertical-align: middle;
     border-radius: 3px;
     background-color: rgba(250, 240, 20, 0.8);
-    animation: blinkAnimeSY 1.5s  infinite alternate;
+    animation: blinkAnimeSY 0.8s  infinite alternate;
 }
 @keyframes blinkAnimeSY {
     0%{ color : rgba(10, 10, 10, 0.6);   background:rgba(250, 240, 20, 0.2) }
@@ -419,19 +424,8 @@
 /* =========================================================================== */
 /*  ポップアップウィンドウ
 /* =========================================================================== */
-#popup {
-    text-align: center;
-    font-weight: bold;
-    display: block;
-    width: 100px;
-    padding: 10px;
-    border: solid;
-    border-radius: 8px;
-    margin: 0 auto;
-    cursor: pointer;
-}
 #popWin {
-position: fixed;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
@@ -440,29 +434,71 @@ position: fixed;
     display: none;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0,0,0,.5);
+    background-color: rgba(0, 0, 0, 0.5);
     z-index: 2;
 }
 .pop-win {
     border-radius: 5px;
-    width: 280px;
-    height: 200px;
+    width: 830px;
     background-color: #fff;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
 }
-.modal-body {
-    display: grid;
-    margin: 10px 0px;
+#popTitle {
+    width: 800px;
+    margin: 15px;
+    color: rgb(30, 30, 30, 0.8);;
+    text-align: left;
+    border: 0.5px solid rgb(168, 168, 169, 0.6);
+    border-radius: 3px;
 }
-.modal-body img { 
-    margin: 0 auto; 
+#popTitle th {
+    background: rgb(0, 168, 169, 0.3);
+    border-color: rgb(30, 30, 30, 0.8);;
+    border-radius: 3px;
+    padding: 0.5rem;
+    margin: 3px;
 }
-#barcode { 
-    margin: 0 auto; 
-}#close {
-    color: #fff;
-    cursor: pointer;
+#popTable {
+    width: 800px;
+    margin: 15px;
+}
+#popTable tr {
+    background-color: #DADADA;
+}
+#popTable tr:nth-child(even) {
+    background-color: #DADADA;
+    height: 3rem;
+}
+#popTable th {
+    border: solid 0.5px #1414141c;
+    background-color: rgb(225, 238, 253);
+}
+#popTable td {
+    font-weight: bold;
+}
+#popTable .indent {
+    padding-left: 0.5rem;
+}
+#popTable .left {
+    text-align: left;
+}
+#popTable .center {
     text-align: center;
-    vertical-align: bottom;
+}
+#popTable .red {
+    color: rgb(230, 10, 10, 0.6);
+}
+#close {
+    cursor: pointer;
+    color: rgb(250, 250, 250, 0.8);
+    background: rgb(30, 30, 30, 0.8);
+    border: 0.1rem solid rgb(168, 168, 169, 0.6);
+    border-radius: 3px;
+    width: calc(100% - 30px);
+    margin: 0px 15px 15px 15px;
+    padding: 5px;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 /* =========================================================================== */
 /*  ワーニング
