@@ -2,6 +2,17 @@
 <%
 // ejs内で使用する共通関数群
 myFunc = {
+    // ab: 日付形式の文字列を [h:mm<br>(d)] で返却
+    ab: function(value){
+        let dateObject = new Date(value);
+        let now = new Date();
+        let option = "";
+        if (now.getDate() != dateObject.getDate()) {
+            option = "<br>(" + dateObject.getDate() + ")";
+        }
+        return value == null ? "" : 
+            dateObject.getHours() + ":" + ("0" + (dateObject.getMinutes())).slice(-2) + option;
+    },
     // aa: 日付形式の文字列を [hh:mm] で返却
     aa: function(value){
         let dateObject = new Date(value);

@@ -86,8 +86,11 @@
                 <table id="popTitle">
                     <tr>
                         <th width="38px" class="left indent">品番</th>
-                        <th width="200px" class="left indent" id="popHMCD">-</th>
-                        <th id="popHMNM">-</th>
+                        <th width="120px" class="left indent" id="popHMCD">-</th>
+                        <th width="182px" id="popHMNM">-</th>
+                        <th id="popCOMM">-</th>
+                        <th width="30px" class="center">予</th>
+                        <th width="38px" class="center" id="popSV">10</th>
                     </tr>
                 </table>
                 <table id="popTable">
@@ -140,7 +143,7 @@
                 <th rowspan="2" width="120px">社内品番</th>
                 <th rowspan="2" width="70px" class="th-small">前々工程</th>
                 <th rowspan="2" width="70px" >前工程</th>
-                <th rowspan="2" width="40px" class="red">YGW</th>
+                <th rowspan="2" width="40px" class="red">実績</th>
                 <th colspan="3" class="th-small">ハンディ情報</th>
             </tr>
             <tr>
@@ -180,7 +183,7 @@
                 <% }; %>
                 
                 <td class="td-large-small"><%= d.HTJUQTY==0 ? "-" : d.HTTANNM %></td>
-                <td class="td-small"><%= d.HTJUQTY==0 ? "-" : myFunc.aa(d.HTJUDT) %></td>
+                <td class="td-small"><%- d.HTJUQTY==0 ? "-" : myFunc.ab(d.HTJUDT) %></td>
                 <% if (d.ODRQTY==d.HTJUQTY && d.HTJUQTY != 0) { %>
                     <td class="td-small s4 w800"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
                 <% } else { %>
@@ -391,6 +394,8 @@
                 popWin.style.display = "flex";
                 document.getElementById("popHMCD").innerText = hmcd;
                 document.getElementById("popHMNM").innerText = data[0].HMNM;
+                document.getElementById("popCOMM").innerText = data[0].WKNOTE;
+                document.getElementById("popSV").innerText = data[0].SVQTY;
 
                 // (3) 今表示されているテーブルのヘッダー以外を全削除
                 let table = document.getElementById("popTable");
@@ -399,18 +404,21 @@
                 } while (table.rows.length > 2);
                 // (4) APIで取得したデータをテーブ行に追加
                 data.forEach(function (d) {
-                    let newRow1 = table.insertRow();
-                    appendTD(newRow1, d.KTSEQ, "center", "2", "");
-                    appendTD(newRow1, d.KTCD, "indent", "", "");
-                    appendTD(newRow1, d.KTNM, "indent", "", "");
-                    appendTD(newRow1, d.ODCD, "indent", "", "");
-                    appendTD(newRow1, d.ODRNM, "indent", "", "");
-                    appendTD(newRow1, (d.JIKBN=="1") ? "有" : "-", "center", "", "");
+                    if (d.KTCD != "WH00") {
+                        let newRow1 = table.insertRow();
+                        appendTD(newRow1, d.KTSEQ, "center", "2", "");
+                        appendTD(newRow1, d.KTCD, "indent", "", "");
+                        appendTD(newRow1, d.KTNM, "indent", "", "");
+                        appendTD(newRow1, d.ODCD, "indent", "", "");
+                        appendTD(newRow1, d.ODRNM, "indent", "", "");
+                        appendTD(newRow1, (d.JIKBN=="1") ? "有" : "-", "center", "", "");
 
-                    let newRow2 = table.insertRow();
-                    appendTD(newRow2, (d.WKNOTE==null) ? "" : d.WKNOTE, "indent", "", "2");
-                    appendTD(newRow2, (d.WKCOMMENT==null) ? "" : d.WKCOMMENT, "indent", "", "2");
-                    appendTD(newRow2, (d.ZAIQTY==0) ? "-" : d.ZAIQTY, "center red", "", "");
+                        let newRow2 = table.insertRow();
+                        appendTD(newRow2, (d.WKNOTE==null) ? "" : d.WKNOTE, "indent", "", "2");
+                        appendTD(newRow2, (d.WKCOMMENT==null) ? "" : d.WKCOMMENT, "indent", "", "2");
+                        appendTD(newRow2, (d.ZAIQTY==0) ? "-" : d.ZAIQTY, "center red", "", "");
+                        newRow2.classList.add("tr3rem");
+                    }
                 });
                 // (5) ポップアップ閉じるイベントハンドラー
                 const close = document.getElementById("close");

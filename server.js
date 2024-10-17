@@ -96,17 +96,21 @@ app.get("/wh/m0510zai/:hmcd", async (req, res, next) => {
         const hmcd = req.params.hmcd;
         const m0510zai = await oracleHandler.getM0510zai(hmcd);
         const m0500zai = await oracleHandler.getM0500zai(hmcd);
-        m0510zai[0].HMNM = m0500zai[0].HMNM;
-        // 実績あり最終工程の在庫数が０だった場合、在庫Fのnull工程の在庫数を転送
+        m0510zai[0].HMNM = m0500zai.HMNM;
+        // 実績あり最終工程の在庫数が０だった場合、在庫Fのnull工程の在庫数をセットし直す
         for (let i = 0; i < m0510zai.length; i++) {
             if (m0510zai[i].JIKBN == "1") {
-                if (m0510zai[i].ZAIQTY == 0 && m0500zai[0].ZAIQTY != 0) {
-                    m0510zai[i].ZAIQTY = m0500zai[0].ZAIQTY;
+                if (m0510zai[i].ZAIQTY == 0 && m0500zai.ZAIQTY != 0) {
+                    m0510zai[i].ZAIQTY = m0500zai.ZAIQTY;
                 }
                 break;
             }
         };
-       res.status(200).json(m0510zai);
+        // SV在庫があればSV在庫数をセットし直す
+        if (m0500zai.SVQTY != 0) {
+            m0510zai[0].SVQTY = m0500zai.SVQTY;
+        }
+        res.status(200).json(m0510zai);
     } catch (err) {
         next(err);
     }
