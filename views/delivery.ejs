@@ -86,8 +86,7 @@
                 <table id="popTitle">
                     <tr>
                         <th width="38px" class="left indent">品番</th>
-                        <th width="120px" class="left indent" id="popHMCD">-</th>
-                        <th width="182px" id="popHMNM">-</th>
+                        <th width="300px" class="left indent" id="popHMCD">-</th>
                         <th id="popCOMM">-</th>
                         <th width="30px" class="center">予</th>
                         <th width="38px" class="center" id="popSV">10</th>
@@ -96,14 +95,14 @@
                 <table id="popTable">
                 <tr>
                     <th rowspan="2" width="40px">順序</th>
-                    <th width="240px" colspan="2" class="left indent">工程</th>
-                    <th width="240px" colspan="2" class="left indent">手配先</th>
-                    <th width="50px">実績</th>
+                    <th width="220px" colspan="2" class="left indent">工程</th>
+                    <th width="220px" colspan="2" class="left indent">手配先</th>
+                    <th width="70px" colspan="2">実績</th>
                 </tr>
                 <tr>
                     <th colspan="2" class="left indent">作業内容</th>
                     <th colspan="2" class="left indent">作業注釈</th>
-                    <th class="red">在庫数</th>
+                    <th colspan="2" class="red">在庫数</th>
                 </tr>
                 </table>
             </div>
@@ -392,8 +391,7 @@
                 // (2) ポップアップ画面を表示
                 const popWin = document.getElementById("popWin");
                 popWin.style.display = "flex";
-                document.getElementById("popHMCD").innerText = hmcd;
-                document.getElementById("popHMNM").innerText = data[0].HMNM;
+                document.getElementById("popHMCD").innerText = hmcd + "【" + data[0].HMNM + "】";
                 document.getElementById("popCOMM").innerText = data[0].WKNOTE;
                 document.getElementById("popSV").innerText = data[0].SVQTY;
 
@@ -403,21 +401,30 @@
                     if (table.rows.length > 2) {table.deleteRow(-1);}
                 } while (table.rows.length > 2);
                 // (4) APIで取得したデータをテーブ行に追加
+                let rowCnt = 0;
                 data.forEach(function (d) {
-                    if (d.KTCD != "WH00") {
+                    if (d.KTCD != "WH00" && rowCnt < 5) {
                         let newRow1 = table.insertRow();
                         appendTD(newRow1, d.KTSEQ, "center", "2", "");
                         appendTD(newRow1, d.KTCD, "indent", "", "");
                         appendTD(newRow1, d.KTNM, "indent", "", "");
                         appendTD(newRow1, d.ODCD, "indent", "", "");
                         appendTD(newRow1, d.ODRNM, "indent", "", "");
-                        appendTD(newRow1, (d.JIKBN=="1") ? "有" : "-", "center", "", "");
+                        appendTD(newRow1, (d.JIKBN=="1") ? "有" : "-", "center", "", "2");
 
                         let newRow2 = table.insertRow();
                         appendTD(newRow2, (d.WKNOTE==null) ? "" : d.WKNOTE, "indent", "", "2");
                         appendTD(newRow2, (d.WKCOMMENT==null) ? "" : d.WKCOMMENT, "indent", "", "2");
-                        appendTD(newRow2, (d.ZAIQTY==0) ? "-" : d.ZAIQTY, "center red", "", "");
+                        if (d.ZAIQTY==0) {
+                            appendTD(newRow2, "-", "center", "", "2");
+                        } else {
+                            appendTD(newRow2, d.ZAIQTY, "center red", "", "");
+                            newCell = newRow2.insertCell(-1);
+                            newCell.innerHTML= '<font size="2rem">' + d.UPDTDT.replace("(","<br>(") + '</font>';
+                            newCell.className = "center red";
+                        }
                         newRow2.classList.add("tr3rem");
+                        rowCnt++;
                     }
                 });
                 // (5) ポップアップ閉じるイベントハンドラー

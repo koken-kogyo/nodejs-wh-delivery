@@ -102,6 +102,7 @@ app.get("/wh/m0510zai/:hmcd", async (req, res, next) => {
             if (m0510zai[i].JIKBN == "1") {
                 if (m0510zai[i].ZAIQTY == 0 && m0500zai.ZAIQTY != 0) {
                     m0510zai[i].ZAIQTY = m0500zai.ZAIQTY;
+                    m0510zai[i].UPDTDT = m0500zai.UPDTDT;
                 }
                 break;
             }
