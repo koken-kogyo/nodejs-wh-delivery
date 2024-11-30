@@ -63,8 +63,9 @@ app.get("/wh/:today", async (req, res, next) => {
     if (!loginCheck(req, res)) return;
     try {
         // 一覧表示
+        const ygws = await mysqlHandler.getYGWdates();
         const kd8330 = await mysqlHandler.getKD8330overview(today);
-        res.render("index.ejs", {req, today, kd8330});
+        res.render("index.ejs", {req, today, ygws, kd8330});
     } catch (err) {
         next(err);
     }
@@ -79,12 +80,13 @@ app.get("/wh/delivery/:tkcd/:shipdt/:xlssn/:disp", async (req, res, next) => {
     req.session.nextaddr = `/wh/delivery/${tkcd}/${shipdt}/${xlssn}/${disp}`;
     if (!loginCheck(req, res)) return;
     Promise.all([
+        mysqlHandler.getTKRNM(tkcd), 
         mysqlHandler.getKD8330Pages(tkcd), 
         mysqlHandler.getKD8330ttlcount(tkcd, shipdt, xlssn),
         mysqlHandler.getKD8330count(tkcd, shipdt, xlssn)])
-    .then( async ([pages, ttl, cnt]) => {
+    .then( async ([tkrnm, pages, ttl, cnt]) => {
         const kd8330 = await mysqlHandler.getKD8330detail(tkcd, shipdt, xlssn, disp);
-        res.render("delivery.ejs", {req, tkcd, shipdt, xlssn, disp, pages, kd8330, ttl, cnt});
+        res.render("delivery.ejs", {req, tkcd, tkrnm, shipdt, xlssn, disp, pages, kd8330, ttl, cnt});
     }).catch((err) => {
         next(err);
     });
@@ -112,6 +114,18 @@ app.get("/wh/m0510zai/:hmcd", async (req, res, next) => {
             m0510zai[0].SVQTY = m0500zai.SVQTY;
         }
         res.status(200).json(m0510zai);
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ステータス更新処理API
+app.get("/wh/status/:autono/:sts", async function (req, res, next) {
+    const autono = req.params.autono;
+    const sts = req.params.sts;
+    try {
+        await mysqlHandler.updateKD8330status(autono, sts);
+        res.status(200).end();
     } catch (err) {
         next(err);
     }

@@ -74,7 +74,6 @@
     grid-column: 1 / 5;
 }
 .containers .item {
-    background: rgb(0, 168, 169, 0.1);
     border: 0.1rem solid rgb(0, 168, 169, 0.1);
     /*background: rgb(230, 230, 230, 0.8);*/
     /*border: 0.2rem solid rgb(230, 230, 230, 0.6);*/
@@ -85,18 +84,44 @@
     font-weight: 600;
     text-align: center;
 }
+.containers .y {
+    background: rgb(255, 255, 0, 0.3);
+}
+.containers .g {
+    background: rgb(0, 255, 0, 0.15);
+}
+.containers .w {
+    background: rgb(169, 168, 169, 0.1);
+}
+/* スタイルシートに .1w は使えないので .w1 */
+.containers .w1 {
+    background: rgb(169, 168, 169, 0.5);
+}
 .containers .item:hover{
     background: rgb(204 ,230 ,250,1);
 }
 .containers .item a {
     color: rgb(50, 50, 50, 0.8);
 }
+
 .containers .item-header {
+    display: flex;
+}
+.containers .item-maker {
+    display: block;
+    width: 100%;
+}
+.containers .qrcode {
+    margin: 17px 0 10px 17px;
+}
+
+.containers .item-header-title {
     font-size: 2.0rem;
-    padding: 0.5rem 0 0 0;
+    padding: 0.5rem 0.7rem 0 0;
     color: chocolate;
 }
 .containers .item-subject {
+    padding-right: 0.7rem;
     color: rgb(210, 105, 30, 0.4);
 }
 .containers .item-date-title {

@@ -42,7 +42,7 @@
             <div class="menu-img"><a href="/wh"><i class="fas fa-home home"></i></a></div>
 
             <!-- 得意先 -->
-            <div class="menu-item">得意先：<br><div class="menu-data">枚方(<%= tkcd %>)</div></div>
+            <div class="menu-item">得意先：<br><div class="menu-data"><%= tkrnm %>(<%= tkcd %>)</div></div>
 
             <!-- 受注納期 -->
             <div class="menu-item">受注納期：<br><div class="menu-data"><%= kd8330[0].DLVRDT %></div></div>
@@ -106,7 +106,7 @@
                 </tr>
                 </table>
             </div>
-            <button id="close">閉じる</button>
+            <button id="popClose">閉じる</button>
         </div>
     </div>
 
@@ -156,12 +156,14 @@
                 <% } else { %>
             <tr>
                 <% }; %>
-                <td class=""><%= d.NO %></td>
+                <td ondblclick=<%- `"detailCancel(${d.AUTONO})"` %>><%= d.NO %></td>
                 <td class="td-small"><%= d.SKBUCD %></td>
                 <td class="td-big lef">　<%= d.TKHMCD %></td>
                 <td class="td-small"><%= d.NNCD %></td>
                 <td class="td-small"><%= d.BOXNUM %></td>
-                <td class="td-small w800"><%= d.ODRQTY==0 ? "" : d.ODRQTY %></td>
+                <td class="td-small w800" ondblclick=<%- `"detailShiped(${d.AUTONO})"` %>>
+                    <%= d.ODRQTY==0 ? "" : d.ODRQTY %>
+                </td>
                 <td class="td-small"><%= d.YESTERDAY %></td>
                 <td class="td-small"><%= d.TODAY %></td>
                 <td class="td-small"><%= d.QCKBN %></td>
@@ -188,6 +190,8 @@
                 <% } else { %>
                     <td class="td-small"><%= d.HTJUQTY==0 ? "-" : d.HTJUQTY %></td>
                 <% }; %>
+                <td style="display: none;"><%= d.AUTONO %></td>
+                <td style="display: none;"><%= d.SHIPSTS %></td>
             </tr>
             <% }); %>
         </table>
@@ -242,18 +246,32 @@
                     tbl1.rows[i].cells[15].style.display = "none";
                 }
                 // 出荷準備完了した行は非表示にする
-                if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[6].innerHTML) {
+                // 強制完了した行も非表示にする
+                if (tbl1.rows[i].cells[5].innerHTML.trim() == tbl1.rows[i].cells[18].innerHTML.trim() ||
+                    tbl1.rows[i].cells[20].innerHTML == "4" ||
+                    tbl1.rows[i].cells[20].innerHTML == "5") {
                     tbl1.rows[i].style.display = "none";
+                }
+                // 強制出荷準備完了行に色をつける
+                if (tbl1.rows[i].cells[20].innerHTML == "5") {
+                    tbl1.rows[i].className = "s5";
+                }
+                // 出荷取消行に色をつける
+                if (tbl1.rows[i].cells[20].innerHTML == "9") {
+                    tbl1.rows[i].className = "s9";
                 }
             }
         }
-        // CheckBoxChangeイベント
+        // 全件表示／残数表示の切り替え
         function checkDispChange() {
+            const checkDisp = document.getElementById("checkDisp");
             const row = tbl1.rows.length;
             for( var i = 2; i <= row; i++ ){
                 if (checkDisp.checked == false) {
-                    if (tbl1.rows[i].cells[5].innerHTML == tbl1.rows[i].cells[18].innerHTML) {
-                       tbl1.rows[i].style.display = "none";
+                    if (tbl1.rows[i].cells[5].innerHTML.trim() == tbl1.rows[i].cells[18].innerHTML.trim() ||
+                        tbl1.rows[i].cells[20].innerHTML == "4" ||
+                        tbl1.rows[i].cells[20].innerHTML == "5") {
+                        tbl1.rows[i].style.display = "none";
                     }
                 } else {
                     tbl1.rows[i].style.display = "";
@@ -428,11 +446,11 @@
                     }
                 });
                 // (5) ポップアップ閉じるイベントハンドラー
-                const close = document.getElementById("close");
-                close.addEventListener("click", () => {
+                const popClose = document.getElementById("popClose");
+                popClose.addEventListener("click", () => {
                     popWin.style.display = "none";
                 });
-                close.focus();
+                popClose.focus();
             });
             
         }
@@ -445,7 +463,80 @@
             if (name != "") newCell.className = name;
         }
 
-    </script>
+        // 明細の取り消し処理
+        function detailCancel(autono){
+            let rowno = 0;
+            let shipsts = "";
+            // (1) ステータス判定
+            for( var i = 2; i < tbl1.rows.length; i++ ){
+                if (tbl1.rows[i].cells[19].innerHTML == autono) {
+                    if (window.getSelection) window.getSelection().removeAllRanges(); // まずフォーカスを外す
+                    shipsts = tbl1.rows[i].cells[20].innerHTML; // 現在の出荷準備状態
+                    if (shipsts == "4" || shipsts == "5") {
+                        alert("出荷準備完了のため取消できません．\nシステム担当者に連絡してください．");
+                        return;
+                    };
+                    let msg = "得意先品番：" + tbl1.rows[i].cells[2].innerHTML + "\n" + 
+                        "指示数：" + tbl1.rows[i].cells[5].innerHTML.trim();
+                    let que = (shipsts == "9") ? "元に戻しますか？" : "出荷取消しますか？";
+                    if (window.confirm(que + "\n\n" + msg) == false) return;
+                    rowno = i;
+                    break;
+                }
+            }
+            // (2) Newステータスをセット
+            const newsts = shipsts == "9" ? "1" : "9";
+            // (3) ステータス変更処理API依頼
+            fetch(`/wh/status/${autono}/${newsts}`)
+            .then(res => {if(!res.ok) {throw new Error(`${res.status} ${res.statusText}`);}})
+            .then(data => {
+                // (4) DOM更新
+                tbl1.rows[rowno].className = (newsts == "9") ? "s9" : "";
+                tbl1.rows[rowno].cells[20].innerHTML = (newsts == "9") ? "9" : "1";
+            })
+            .catch(err => {alert(err);});
+        }
+
+        // 明細の出荷準備強制完了処理
+        function detailShiped(autono){
+            let rowno = 0;
+            let shipsts = "";
+            // (1) ステータス判定
+            for( var i = 2; i < tbl1.rows.length; i++ ){
+                if (tbl1.rows[i].cells[19].innerHTML == autono) {
+                    if (window.getSelection) window.getSelection().removeAllRanges(); // まずフォーカスを外す
+                    shipsts = tbl1.rows[i].cells[20].innerHTML; // 現在の出荷準備状態
+                    if (shipsts == "9") {
+                        alert("出荷取消のため強制完了できません．\nシステム担当者に連絡してください．");
+                        return;
+                    };
+                    let msg = "得意先品番：" + tbl1.rows[i].cells[2].innerHTML + "\n" + 
+                        "指示数：" + tbl1.rows[i].cells[5].innerHTML.trim();
+                    let que = (shipsts == "5") ? "元に戻しますか？" : "出荷準備完了にしますか？";
+                    if (window.confirm(que + "\n\n" + msg) == false) return;
+                    rowno = i;
+                    break;
+                }
+            }
+            // (2) Newステータスをセット
+            const newsts = shipsts == "5" ? "1" : "5";
+            // (3) ステータス変更処理API依頼
+            fetch(`/wh/status/${autono}/${newsts}`)
+            .then(res => {if(!res.ok) {throw new Error(`${res.status} ${res.statusText}`);}})
+            .then(data => {
+                // (4) DOM更新
+                tbl1.rows[rowno].className = (newsts == "5") ? "s5" : "";
+                if (document.getElementById("checkDisp").checked == false && newsts == "5") {
+                    tbl1.rows[rowno].style.display = "none";
+                } else {
+                    tbl1.rows[rowno].style.display = "";
+                }
+                tbl1.rows[rowno].cells[20].innerHTML = (newsts == "5") ? "5" : "1";
+            })
+            .catch(err => {alert(err);});
+        }
+
+</script>
 
 </body>
 </html>

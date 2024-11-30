@@ -33,69 +33,22 @@ const getM0010 = async (userid) => {
 };
 exports.getM0010 = getM0010;
 
-// 今週月曜日から来週金曜日までの営業日を取得
-const getYMDs = async () => {
+// 当日Y、翌営業日G、W,1W,2W,3Wを取得
+//  ks0820:カレンダーマスタ(EMクローズの稼働日で出荷はあり)
+const getYGWdates = async () => {
     const sql = 
-        "select YMD from (select DATE_FORMAT(YMD,'%Y-%m-%d') 'YMD' from s0820 where CALTYP='00001' and WKKBN='1' and YMD between " +
-        "(CURRENT_DATE - interval WEEKDAY(CURRENT_DATE) day) " + 
-        "and " + 
-        "(CURRENT_DATE - interval WEEKDAY(CURRENT_DATE) day + interval 30 day)) T limit 10"
-    const ymdobj = await getDatabase(sql, []);
-    const ymd = [];
-    for (let row of ymdobj) {ymd.push(row.YMD)};
-    return ymd;
+        "select DATE_FORMAT(YMD, '%Y-%m-%d') 'YMD' from ks0820 " + 
+        "where CALTYP='00001' and YMD between CURDATE() and date_add(CURDATE(), interval 21 day) "
+        "union distinct " + 
+        "select DATE_FORMAT(YMD, '%Y-%m-%d') 'YMD' from s0820 " + 
+        "where CALTYP='00001' and YMD between CURDATE() and date_add(CURDATE(), interval 21 day) " + 
+        "and WKKBN='1' order by YMD asc limit 6"
+    const ygwobj = await getDatabase(sql, []);
+    const ygws = [];
+    for (let row of ygwobj) {ygws.push(row.YMD)};
+    return ygws;
 };
-exports.getYMDs = getYMDs;
-
-// 炉中洩れ検査日報取得
-exports.getKD8220 = async (date, odcd, disp) => {
-    const odcdlike = odcd + "%";
-    let orderby = "";
-    switch(disp){
-        case "1":
-            orderby = "order by a.INSTDT asc";
-            break;
-        case "2":
-            orderby = "order by a.INSTDT desc";
-            break;
-        case "3":
-            orderby = "order by a.HMCD asc";
-            break;
-        case "4":
-            orderby = "order by a.HMCD desc";
-            break;
-        case "5":
-            orderby = "order by a.OPERATOR asc";
-            break;
-        case "6":
-            orderby = "order by a.OPERATOR desc";
-            break;                         
-    }
-    const kd8220 = await getDatabase(
-        "select a.*, ifnull(b.TKRNM, '-') as 'TKRNM', NAME as 'OPNAME' " + 
-        "from kd8220 a left outer join m0200 b on a.TKCD=b.TKCD, km0010 c " +
-        "where a.OPERATOR=c.EMPNO and ENTRYDT=? and ODCD like ? " + orderby
-        , [date, odcdlike]
-    );
-    return kd8220;
-};
-
-// iPhone表示用の日報データ取得
-exports.getKD8220iPhone = async (date, entryplace) => {
-    let odcd = "";
-    if (entryplace == "WL04") {
-        odcd = "607%";
-    } else if (entryplace == "WL01") {
-        odcd = "605%";
-    }
-    const kd8220 = await getDatabase(
-        "select a.*, ifnull(b.TKRNM, '-') as 'TKRNM', NAME as 'OPNAME' " + 
-        "from kd8220 a left outer join m0200 b on a.TKCD=b.TKCD, km0010 c " +
-        "where a.ODCD like '" + odcd + "' and a.OPERATOR=c.EMPNO and ENTRYDT=? order by a.HMCD"
-        , [date]
-    );
-    return kd8220;
-};
+exports.getYGWdates = getYGWdates;
 
 // 従業員マスタ(KM0010)存在チェック
 exports.isKM0010 = async (userid) => {
@@ -128,11 +81,17 @@ exports.getKD8330overview = async (today) => {
     return kd8330;
 };
 
+// 得意先名称取得
+exports.getTKRNM = async (tkcd) => {
+    const sql = await getDatabase("select TKRNM from m0200 a where a.tkcd=?", [tkcd]);
+    return  sql[0].TKRNM;
+}
+
 // 出荷指示書ファイル明細より出荷予定点数取得
 exports.getKD8330ttlcount = async (tkcd, shipdt, xlssn) => {
     const kd8330 = await getDatabase(
         "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
-        "where a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
+        "where a.tkcd=? and a.shipdt=date(?) and a.xlssn=?"
         , [tkcd, shipdt, xlssn]
     );
     return  Number(kd8330[0].TTL);
@@ -142,7 +101,7 @@ exports.getKD8330ttlcount = async (tkcd, shipdt, xlssn) => {
 exports.getKD8330count = async (tkcd, shipdt, xlssn) => {
     const kd8330 = await getDatabase(
         "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
-        "where a.ODRQTY=a.HTJUQTY and a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
+        "where a.ODRQTY=a.HTJUQTY and a.tkcd=? and a.shipdt=date(?) and a.xlssn=?"
         , [tkcd, shipdt, xlssn]
     );
     return Number(kd8330[0].TTL);
@@ -153,9 +112,9 @@ exports.getKD8330detail = async (tkcd, shipdt, xlssn, disp) => {
     const kd8330 = await getDatabase(
         "select a.*, b.TKRNM, c.NAME as 'HTTANNM', d.PODRNM AS 'YPODRNM', d.ODRNM AS 'YODRNM' " + 
         ", d.PKZAIQTY, d.PJIDT, d.PJIQTY, d.PLNQTY, d.ZAIQTY, d.KZAIQTY, d.JIDT, d.JIQTY " + 
-        "from kd8330 a left outer join km0010 c on trim(a.HTTANCD)=c.EMPNO " + 
+        "from kd8330 a left outer join km0010 c on right(trim(a.HTTANCD),5)=c.EMPNO " + 
         "left outer join kd8010 d on d.HMCD in (a.TKHMCD, a.HMCD) and d.OPDATE=?, m0200 b " + 
-        "where a.TKCD=b.TKCD and a.tkcd=? and a.shipdt>=date(?) and a.xlssn=?"
+        "where a.TKCD=b.TKCD and a.tkcd=? and a.shipdt=date(?) and a.xlssn=?"
         , [shipdt, tkcd, shipdt, xlssn]
     );
     return kd8330;
@@ -164,7 +123,7 @@ exports.getKD8330detail = async (tkcd, shipdt, xlssn, disp) => {
 // 出荷指示書の対象Page情報を取得
 const getKD8330Pages = async (tkcd) => {
     const sql = "select DATE_FORMAT(SHIPDT, '%Y-%m-%d') as 'SHIPDT',XLSSN from kd8330 " + 
-        "where TKCD=? and SHIPDT > date_add(curdate(), interval -1 day) group by SHIPDT,XLSSN"
+        "where TKCD=? and SHIPDT > date_add(curdate(), interval -1 day) group by SHIPDT,XLSSN order by SHIPDT,XLSSN"
     const arrayobj = await getDatabase(sql, [tkcd]);
     const array = [];
     for (let row of arrayobj) {array.push(row.SHIPDT + ":" + row.XLSSN + ":")};
@@ -200,3 +159,11 @@ const getM0500zai = async (hmcd) => {
     return m0500zai;
 };
 exports.getM0500zai = getM0500zai;
+
+// 出荷指示書明細ステータス更新
+exports.updateKD8330status = async (autono, sts) => {
+    const update = await getDatabase(
+        "update kd8330 set SHIPSTS=? where AUTONO=?"
+        , [sts, autono]
+    );
+};

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/css/style-basic.css">
     <link rel="stylesheet" href="/static/css/style-index.css">
     <!-- Common JavaScript -->
+    <script src="/static/javascripts/qrcode.js"></script>
     <script src="/static/javascripts/_myfunctions.js"></script>
 </head>
 <body>
@@ -27,11 +28,30 @@
             <i class="fas fa-paw"></i> 出荷指示書
         </div>
         <% kd8330.forEach(function (d) { %>
-            <div class="item">
+            <% if (d.SHIPDT == ygws[0]) { %>
+                <div class="item y">
+            <% } else if (d.SHIPDT == ygws[1]) { %>
+                <div class="item g">
+            <% } else { %>
+                <div class="item w">
+            <% } %>
                 <!--a href="/wh/delivery/C0103/2024-07-16/0717/1"-->
                 <a href="/wh/delivery/<%= d.TKCD %>/<%= d.SHIPDT %>/<%= d.XLSSN %>/1">
-                    <div class="item-header"><%= d.TKRNM %></div>
-                    <div class="item-subject"><%= d.XLSSN %></div>
+                    <div class="item-header">
+                        <% if (d.SHIPDT == ygws[0]) { %>
+                            <div class="qrcode y" id="<%= d.TKCD %>-Y"></div>
+                        <% } else if (d.SHIPDT == ygws[1]) { %>
+                            <div class="qrcode g" id="<%= d.TKCD %>-G"></div>
+                        <% } else if (d.SHIPDT == ygws[2]) { %>
+                            <div class="qrcode w" id="<%= d.TKCD %>-W"></div>
+                        <% } else if (d.SHIPDT == ygws[3]) { %>
+                            <div class="qrcode w1" id="<%= d.TKCD %>-1W"></div>
+                        <% } %>
+                        <div class="item-maker">
+                            <div class="item-header-title"><%= d.TKRNM %></div>
+                            <div class="item-subject"><%= d.XLSSN %></div>
+                        </div>
+                    </div>
                     <div class="item-date-title">出荷日：
                         <date class="item-date"><%= myFunc.a(d.SHIPDT) %></date>
                     </div>
@@ -55,9 +75,29 @@
 
     <!-- ブラウザ読み込み完了後のJavaScriptを記述 -->
     <script>
+        // 初期表示にQRコードを埋め込む
+        QRDisp();
+        // Javascriptテスト
         function scriptTest(){
             var userAgent = window.navigator.userAgent.toLowerCase(); 
             alert(userAgent);
+        }
+        // QRポップアップ表示
+        function QRDisp(){
+            const YGW = ["C0101-Y","C0101-G","C0101-W","C0101-1W","C0105-Y","C0105-G","C0105-W","C0105-1W"];
+            for (let i = 0; i < YGW.length; i++) {
+                const dom = document.getElementById(YGW[i]);
+                if (dom) {
+                    new QRCode(dom, {
+                        text: YGW[i],
+                        width: 52,
+                        height: 52,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                }
+            }
         }
     </script>
 
