@@ -361,10 +361,12 @@
                         const row = tr.sectionRowIndex;
                         const tkhmcd = tbl1.rows[row].cells[2].innerText.trim();
                         const hmcd = tbl1.rows[row].cells[12].innerText.trim();
+                        const han = /^[\p{scx=Han}]+$/u; // 漢字の場合:true:「張紙」等の漢字が社内品番列に入っている為
+                        // alert(hmcd + ":" + han.test(hmcd));
                         // alert(`行row=${ row } 列column=${ column }`);
 
                         // 品目手順ポップアップ表示
-                        popWin(hmcd=="" ? tkhmcd : hmcd);
+                        popWin(hmcd=="" || han.test(hmcd) ? tkhmcd : hmcd);
 
                     }
                 }

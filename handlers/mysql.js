@@ -38,7 +38,7 @@ exports.getM0010 = getM0010;
 const getYGWdates = async () => {
     const sql = 
         "select DATE_FORMAT(YMD, '%Y-%m-%d') 'YMD' from ks0820 " + 
-        "where CALTYP='00001' and YMD between CURDATE() and date_add(CURDATE(), interval 21 day) "
+        "where CALTYP='00001' and YMD between CURDATE() and date_add(CURDATE(), interval 21 day) " + 
         "union distinct " + 
         "select DATE_FORMAT(YMD, '%Y-%m-%d') 'YMD' from s0820 " + 
         "where CALTYP='00001' and YMD between CURDATE() and date_add(CURDATE(), interval 21 day) " + 
@@ -68,11 +68,11 @@ exports.getKD8330overview = async (today) => {
         "select " +
         "	a.TKCD, replace(b.TKRNM,'ｸﾎﾞﾀ','') as 'TKRNM', a.SHIPDT, a.DLVRDT, a.XLSSN" +
         "	, count(distinct a.TKHMCD) as 'TTL' " +
-        "   , count(distinct d.TKHMCD) as 'CNT' " +
-        "from kd8330 a left outer join kd8330 d on " +
-        "     d.TKCD=a.TKCD and d.SHIPDT=a.SHIPDT and d.DLVRDT=a.DLVRDT and d.XLSSN=a.XLSSN and d.ODRQTY=d.HTJUQTY" +
+        "   , 0 as 'CNT' " +
+        "from kd8330 a " +
         "   , m0200 b " +
         "where a.TKCD=b.TKCD and " +
+        "a.tkcd in ('C0101','C0103','C0105') and " +
         "a.shipdt>=date(?) " +
         "group by " +
         "	a.TKCD, b.TKRNM, a.SHIPDT, a.DLVRDT, a.XLSSN"
