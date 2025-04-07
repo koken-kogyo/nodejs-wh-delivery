@@ -234,6 +234,12 @@
 #details-index .th-large-small {
     font-size: 0.6rem;
 }
+/*  APEM連携用 */
+#details-index td a {
+    display: inline-block;
+    color: rgb(60, 60, 60);
+    text-decoration: none;
+}
 #details-index .td-a {
     color: cadetblue;
     font-weight: 600;

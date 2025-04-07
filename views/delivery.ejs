@@ -15,6 +15,7 @@
 <body>
     <!-- Common JavaScript EJS -->
     <%- include("_myfunctions.ejs") %>
+    <% let osType = myRequestHeader.osType(req); %>
 
     <!-- Header -->
     <%- include("_header.ejs", { title: "出荷指示書" + myFunc.c(shipdt), req }) %>
@@ -26,8 +27,6 @@
         
     <% } else { %>
         <div id="menu">
-
-            <% let osType = myRequestHeader.osType(req); %>
 
             <!-- 前日ボタン -->
             <% let idxY = pages.findIndex((dt) => { return dt === shipdt+":"+xlssn+":" }); %>
@@ -158,7 +157,14 @@
                 <% }; %>
                 <td ondblclick=<%- `"detailCancel(${d.AUTONO})"` %>><%= d.NO %></td>
                 <td class="td-small"><%= d.SKBUCD %></td>
-                <td class="td-big lef">　<%= d.TKHMCD %></td>
+                <td class="td-big lef">
+                    <% if (osType == "windows") { %>
+                        <a href="http://apemsv/PEMasterEM/docspace/sdk/contentView.do?enc=UTF-8&service=cn%3Ddrep_service%40APEMSV%2Cou%3Dcomponents%2Cdc%3DAPEMEM&workspace=図面検索&condition=oyaSearch&item=0%3Aoperator%3AexactlyMatch&item=0%3Avalue%3A<%= d.TKHMCD %>&item=6%3Aoperator%3Aboolean&item=6%3Avalue%3Atrue" target="_blank">
+                    <% } else { %>
+                        <a href="http://apemsv/PEMasterEM/docspace/sdk/download.do?enc=UTF-8&service=cn%3Ddrep_service%40APEMSV%2Cou%3Dcomponents%2Cdc%3DAPEMEM&workspace=図面検索&condition=oyaSearch&item=0%3Aoperator%3AexactlyMatch&item=0%3Avalue%3A<%= d.TKHMCD %>&item=6%3Aoperator%3Aboolean&item=6%3Avalue%3Atrue" target="_blank">
+                    <% }; %>
+                    　<%= d.TKHMCD %></a>
+                </td>
                 <td class="td-small"><%= d.NNCD %></td>
                 <td class="td-small"><%= d.BOXNUM %></td>
                 <td class="td-small w800" ondblclick=<%- `"detailShiped(${d.AUTONO})"` %>>
