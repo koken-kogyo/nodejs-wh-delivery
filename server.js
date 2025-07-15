@@ -64,9 +64,11 @@ app.get("/wh/:today", async (req, res, next) => {
     try {
         // 一覧表示
         const ygws = await mysqlHandler.getYGWdates();
-        const kd8330 = await mysqlHandler.getKD8330overview(today);
+        const kd8330 = await mysqlHandler.getKD8330overview2(today);
         for (let row of kd8330) {
-            row.CNT = await mysqlHandler.getKD8330count(row.TKCD, row.SHIPDT, row.XLSSN);
+            for (let d of row.DATA) {
+                d.CNT = await mysqlHandler.getKD8330count(row.HEAD.TKCD, d.SHIPDT, d.XLSSN);
+            }
         }
         res.render("index.ejs", {req, today, ygws, kd8330});
     } catch (err) {

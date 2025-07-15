@@ -72,13 +72,40 @@ exports.getKD8330overview = async (today) => {
         "from kd8330 a " +
         "   , m0200 b " +
         "where a.TKCD=b.TKCD and " +
-        "a.tkcd in ('C0101','C0103','C0105') and " +
+        "a.tkcd in ('C0101','C0103','C0104','C0105') and " +
         "a.shipdt>=date(?) " +
         "group by " +
         "	a.TKCD, b.TKRNM, a.SHIPDT, a.DLVRDT, a.XLSSN"
         , [today]
     );
     return kd8330;
+};
+
+// 出荷指示書ファイルより概要取得
+exports.getKD8330overview2 = async (today) => {
+    const tkcds = [
+        {TKCD: "C0101", TKRNM: "堺"},
+        {TKCD: "C0104", TKRNM: "臨海"},
+        {TKCD: "C0103", TKRNM: "筑波"},
+        {TKCD: "C0105", TKRNM: "枚方"}];
+    const kd8330s = [];
+    for (let t of tkcds) {
+        let db = await getDatabase(
+            "select " +
+            "	a.SHIPDT, a.DLVRDT, a.XLSSN" +
+            "	, count(distinct a.TKHMCD) as 'TTL' " +
+            "   , 0 as 'CNT' " +
+            "from kd8330 a " +
+            "where a.tkcd = ? and " +
+            "a.shipdt >= date(?) " +
+            "group by " +
+            "	a.TKCD, a.SHIPDT, a.DLVRDT, a.XLSSN"
+            , [t.TKCD, today]
+        );
+        const j = {HEAD: t, DATA: db};
+        kd8330s.push(j);
+    };
+    return kd8330s;
 };
 
 // 得意先名称取得

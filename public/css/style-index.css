@@ -24,8 +24,8 @@
 :root {
     --item-title-row: 40px;
 
-    --tablet-grid-column: 230px;
-    --tablet-grid-row: 320px;
+    --tablet-grid-column: 210px;
+    --tablet-grid-row: 300px;
     --tablet-item-img: 100px;
 
     --mobile-grid-column: 180px;
@@ -48,16 +48,17 @@
 /*  レスポンシブレイアウト [Grid] 設定
 /* =========================================================================== */
 /* Tablet [default] [4列 x 2行] */
+.responsible:before { content: "Default"; }
 .containers {
-    display: grid;
     background: rgb(250, 250, 250);
     border-radius: 0.5rem;
     font-size: small;
     margin: 50px auto;
-    width: calc((var(--tablet-grid-column) * 4) + 2rem);
-    height: 90vh;
-    grid-template-columns: repeat(4, var(--tablet-grid-column));
-    grid-template-rows: var(--item-title-row) repeat(2, var(--tablet-grid-row));
+    width: calc((var(--tablet-grid-column) * 5) + 2rem);
+}
+.containers .tkcd {
+    display: grid;
+    grid-template-columns: repeat(5, var(--tablet-grid-column));
 }
 .containers a {
     display: inline-block;
@@ -117,7 +118,7 @@
 
 .containers .item-header-title {
     font-size: 2.0rem;
-    padding: 0.5rem 0.7rem 0 0;
+    padding: 0.2rem 0.7rem 0 0;
     color: chocolate;
 }
 .containers .item-subject {
@@ -125,31 +126,27 @@
     color: rgb(210, 105, 30, 0.4);
 }
 .containers .item-date-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     text-align: left;
     padding: 0 0 0.3rem 1.0rem;
 }
 .containers .item-date {
     font-family: 'Century';
-    font-size: 2.0rem;
+    font-size: 1.8rem;
 }
 .containers .item-count-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     text-align: left;
-    padding: 0.8rem 0 0 1.0rem;
+    padding: 0.3rem 0 0 0.5rem;
 }
 .containers .item-count {
     font-family: 'Century';
-    font-size: 2.0rem;
+    font-size: 1.7rem;
     padding-top: 0.1rem;
 }
 /* tablet-portrait(縦)-size: ～900px 業務[3列 x 2行] + 他[3列 x 1行] + [Topics] */
 @media screen and (max-width: 900px) and (orientation: portrait) {
-    .containers {
-        width: calc((var(--tablet-grid-column) * 3) + 1rem);
-        grid-template-columns: repeat(3, var(--tablet-grid-column));
-        grid-template-rows: var(--item-title-row) repeat(2, var(--tablet-grid-row)) var(--item-title-row) var(--tablet-grid-row) calc(var(--tablet-grid-row)*1.5);
-    }
+    .responsible:before { content: "TabletPortrait"; }
     .containers .item-top {
         display: none;
     }
@@ -166,6 +163,7 @@
 /* HP表示なし、ニュースリストを最下行に移動 業務[2列 x 2行] + 他[2列 x 1行] + [Topics] */
 @media screen and (max-height:500px) and (orientation: landscape) and (max-width:800px),
        screen and (max-width: 500px) and (orientation: portrait) {
+    .responsible:before { content: "MobileLandscape"; }
     .containers {
         width: calc((var(--mobile-grid-column) * 2) + 1rem);
         grid-template-columns: repeat(2, var(--mobile-grid-column));
@@ -198,14 +196,11 @@
 }
 /* 解像度: 1280*1024 */
 @media screen and (min-width: 1200px) and (max-width: 1899px) and (orientation: landscape) {
-    .containers {
-        /* 変更なし
-        background: rgb(250, 25, 25);
-        */
-    }
+    .responsible:before { content: "MiniPCLandscape"; }
 }
 /* desktop-pc-size: 1900px～ (各ブラウザのサイドバー、垂直タブバー、コレクション、エッセンシャル等を考慮) */
 @media screen and (min-width: 1900px) and (max-width: 2499px) and (orientation: landscape) {
+    .responsible:before { content: "DesktopPCLandscape"; }
     .containers {
         margin-top: 30px;
         background: rgb(250, 250, 250);
@@ -238,6 +233,7 @@
 }
 /* 27inchMonitor-size: 2560*1440 */
 @media screen and (min-width: 2500px) and (orientation: landscape) {
+    .responsible:before { content: "FullPCLandscape"; }
     .containers {
         background: rgb(60, 60, 60);
     }

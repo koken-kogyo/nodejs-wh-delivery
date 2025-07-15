@@ -219,6 +219,8 @@
 #details-index th {
     border: solid 0.5px #1414141c;
     background-color: rgb(225, 238, 253);
+    position: sticky;
+    top: 100px;
 }
 #details-index th:hover {
     cursor: pointer;

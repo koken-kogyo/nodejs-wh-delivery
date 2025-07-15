@@ -46,6 +46,13 @@ footer {
     background: -webkit-linear-gradient(top, rgba(62,173,242,1) 0%,rgba(43,101,200,1) 100%);
     background: linear-gradient(to bottom, rgba(62,173,242,1) 0%,rgba(43,101,200,1) 100%);
 }
+/* === [responsible] === */
+footer .responsible {
+    position: fixed; /* 要素の位置：絶対*/
+    bottom: 2px;
+    right: 60px;
+    color: rgb(255, 255, 255, 0.2);
+}
 footer>p { 
     padding: 4px 2px 2px 2px;
     margin: 0;

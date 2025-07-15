@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>物流出荷指示書</title>
-    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style-basic.css">
     <link rel="stylesheet" href="/static/css/style-index.css">
+    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
+    <!-- レスポンシブwebデザインの指定 --><!-- デバイスの横幅合わせ,等倍表示（半角空白入れるな！） -->
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <!-- Common JavaScript -->
-    <script src="/static/javascripts/qrcode.js"></script>
     <script src="/static/javascripts/_myfunctions.js"></script>
 </head>
 <body>
@@ -27,43 +28,41 @@
         <div class="title">
             <i class="fas fa-paw"></i> 出荷指示書
         </div>
-        <% kd8330.forEach(function (d) { %>
-            <% if (d.SHIPDT == ygws[0]) { %>
-                <div class="item y">
-            <% } else if (d.SHIPDT == ygws[1]) { %>
-                <div class="item g">
-            <% } else { %>
-                <div class="item w">
-            <% } %>
-                <!--a href="/wh/delivery/C0103/2024-07-16/0717/1"-->
-                <a href="/wh/delivery/<%= d.TKCD %>/<%= d.SHIPDT %>/<%= d.XLSSN %>/1">
-                    <div class="item-header">
-                        <% if (d.SHIPDT == ygws[0]) { %>
-                            <div class="qrcode y" id="<%= d.TKCD %>-Y"></div>
-                        <% } else if (d.SHIPDT == ygws[1]) { %>
-                            <div class="qrcode g" id="<%= d.TKCD %>-G"></div>
-                        <% } else if (d.SHIPDT == ygws[2]) { %>
-                            <div class="qrcode w" id="<%= d.TKCD %>-W"></div>
-                        <% } else if (d.SHIPDT == ygws[3]) { %>
-                            <div class="qrcode w1" id="<%= d.TKCD %>-1W"></div>
-                        <% } %>
-                        <div class="item-maker">
-                            <div class="item-header-title"><%= d.TKRNM %></div>
-                            <div class="item-subject"><%= d.XLSSN %></div>
+        <% kd8330.forEach(function (t) { %>
+        <div class="tkcd">
+            <% let columncount = 0; %>
+            <% t.DATA.forEach(function (d) { %>
+                <% if (d.SHIPDT == ygws[0]) { %>
+                    <div class="item y">
+                <% } else if (d.SHIPDT == ygws[1]) { %>
+                    <div class="item g">
+                <% } else { %>
+                    <div class="item w">
+                <% } %>
+                    <a href="/wh/delivery/<%= t.HEAD.TKCD %>/<%= d.SHIPDT %>/<%= d.XLSSN %>/1">
+                        <div class="item-header">
+                            <div class="item-maker">
+                                <div class="item-header-title "><%= t.HEAD.TKRNM %></div>                        
+                                <div class="item-subject"><%= d.XLSSN %></div>
+                            </div>
                         </div>
+                        <div class="item-date-title">出荷日：
+                            <date class="item-date"><%= myFunc.a(d.SHIPDT) %></date>
+                        </div>
+                        <div class="item-date-title">納品日：
+                            <date class="item-date"><%= myFunc.a(d.DLVRDT) %></date>
+                        </div>
+                        <div class="item-count-title">出荷準備点数：</div>
+                        <div class="item-count"><%= d.CNT %> / <%= d.TTL %><str class="item-count-title">点</str></div>
+                    </a>
                     </div>
-                    <div class="item-date-title">出荷日：
-                        <date class="item-date"><%= myFunc.a(d.SHIPDT) %></date>
-                    </div>
-                    <div class="item-date-title">納品日：
-                        <date class="item-date"><%= myFunc.a(d.DLVRDT) %></date>
-                    </div>
-                    <div class="item-count-title">出荷準備点数：</div>
-                    <div class="item-count"><%= d.CNT %> / <%= d.TTL %><str class="item-count-title">点</str></div>
-                </a>
-            </div>
+                    <% columncount++; %>
+            <% }); %>
+            <% while (columncount % 6 != 0) { %>
+                <% columncount++; %>
+            <% } %>
+        </div>
         <% }); %>
-        <br><br>
     <% }; %>
 
     </div></div>
