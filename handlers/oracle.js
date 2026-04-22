@@ -1,10 +1,12 @@
 const oracledb=require('oracledb');
 const { oracleConfig } = require('../config.js');
+const { decryptPassword } = require("./decrypt-password.js");
+const decPasswd = decryptPassword(oracleConfig.PASSWORD);
 
 // ORACLE 接続情報
 const dbConfig = {
     user          : oracleConfig.USER,
-    password      : oracleConfig.PASSWORD,
+    password      : decPasswd,
     connectString : `${oracleConfig.HOST}/${oracleConfig.SERVICENAME}`,
     externalAuth  : process.env.NODE_ORACLEDB_EXTERNALAUTH ? true : false
 };

@@ -151,6 +151,13 @@ app.get("/i/:tkcd", async (req, res, next) => {
     }
 });
 
+// Send Mail Test
+app.get("/sendmail", async (req, res, next) => {
+    const MAIL_SUBJECT = "[自動通知] メール送信テスト";
+    const MAIL_BODY_HEADER = `各位\n\nメール送信テストとなります．\n\n error.log を確認してください\n\n`;
+    sendMail(MAIL_SUBJECT, MAIL_BODY_HEADER);
+});
+
 // 包括的エラーハンドリング
 app.use((err, req, res, next) => {
     console.log("包括的エラーハンドリング")
