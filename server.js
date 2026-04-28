@@ -67,7 +67,7 @@ app.get("/wh/:today", async (req, res, next) => {
         const kd8330 = await mysqlHandler.getKD8330overview2(today);
         for (let row of kd8330) {
             for (let d of row.DATA) {
-                d.CNT = await mysqlHandler.getKD8330count(row.HEAD.TKCD, d.SHIPDT, d.XLSSN);
+                d.CNT = await mysqlHandler.getKD8330count(row.HEAD.TKCD, d.SHIPDT, d.DLVRDT, d.XLSSN);
             }
         }
         res.render("index.ejs", {req, today, ygws, kd8330});

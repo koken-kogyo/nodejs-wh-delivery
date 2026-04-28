@@ -127,11 +127,11 @@ exports.getKD8330ttlcount = async (tkcd, shipdt, xlssn) => {
 };
 
 // 出荷指示書ファイル明細より出荷点数取得
-exports.getKD8330count = async (tkcd, shipdt, xlssn) => {
+exports.getKD8330count = async (tkcd, shipdt, dlvrdt, xlssn) => {
     const kd8330 = await getDatabase(
         "select count(distinct a.TKHMCD) as 'TTL' from kd8330 a " +
-        "where a.ODRQTY=a.HTJUQTY and a.tkcd=? and a.shipdt=date(?) and a.xlssn=?"
-        , [tkcd, shipdt, xlssn]
+        "where a.ODRQTY=a.HTJUQTY and a.tkcd=? and a.shipdt=date(?) and a.dlvrdt=date(?) and a.xlssn=?"
+        , [tkcd, shipdt, dlvrdt, xlssn]
     );
     return Number(kd8330[0].TTL);
 };
